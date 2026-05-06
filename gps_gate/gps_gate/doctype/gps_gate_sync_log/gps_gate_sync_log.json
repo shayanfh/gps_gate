@@ -1,0 +1,146 @@
+{
+    "actions": [],
+    "allow_rename": 0,
+    "creation": "2026-02-09 15:30:00.000000",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "sync_id",
+        "sync_type",
+        "status",
+        "column_break_1",
+        "started_on",
+        "completed_on",
+        "last_updated",
+        "section_progress",
+        "total_records",
+        "synced_records",
+        "error_count",
+        "column_break_2",
+        "total_batches",
+        "completed_batches",
+        "progress_percent"
+    ],
+    "fields": [
+        {
+            "fieldname": "sync_id",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Sync ID",
+            "read_only": 1,
+            "reqd": 1,
+            "unique": 1
+        },
+        {
+            "fieldname": "sync_type",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Sync Type",
+            "read_only": 1
+        },
+        {
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "label": "Status",
+            "options": "Queued\nIn Progress\nCompleted\nFailed",
+            "read_only": 1
+        },
+        {
+            "fieldname": "column_break_1",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "started_on",
+            "fieldtype": "Datetime",
+            "in_list_view": 1,
+            "label": "Started On",
+            "read_only": 1
+        },
+        {
+            "fieldname": "completed_on",
+            "fieldtype": "Datetime",
+            "label": "Completed On",
+            "read_only": 1
+        },
+        {
+            "fieldname": "last_updated",
+            "fieldtype": "Datetime",
+            "label": "Last Updated",
+            "read_only": 1
+        },
+        {
+            "fieldname": "section_progress",
+            "fieldtype": "Section Break",
+            "label": "Progress Details"
+        },
+        {
+            "fieldname": "total_records",
+            "fieldtype": "Int",
+            "in_list_view": 1,
+            "label": "Total Records",
+            "read_only": 1
+        },
+        {
+            "fieldname": "synced_records",
+            "fieldtype": "Int",
+            "label": "Synced Records",
+            "read_only": 1
+        },
+        {
+            "fieldname": "error_count",
+            "fieldtype": "Int",
+            "label": "Error Count",
+            "read_only": 1
+        },
+        {
+            "fieldname": "column_break_2",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "total_batches",
+            "fieldtype": "Int",
+            "label": "Total Batches",
+            "read_only": 1
+        },
+        {
+            "fieldname": "completed_batches",
+            "fieldtype": "Int",
+            "label": "Completed Batches",
+            "read_only": 1
+        },
+        {
+            "fieldname": "progress_percent",
+            "fieldtype": "Percent",
+            "label": "Progress %",
+            "read_only": 1
+        }
+    ],
+    "index_web_pages_for_search": 0,
+    "links": [],
+    "modified": "2026-02-09 15:30:00.000000",
+    "modified_by": "Administrator",
+    "module": "GPS Gate",
+    "name": "GPS Gate Sync Log",
+    "naming_rule": "Expression",
+    "autoname": "SYNC-.######",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "sort_field": "creation",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 0
+}

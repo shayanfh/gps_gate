@@ -1,0 +1,61 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2026-01-26 11:15:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "gps_gate_user",
+        "user_id",
+        "username",
+        "full_name",
+        "added_on"
+    ],
+    "fields": [
+        {
+            "fieldname": "gps_gate_user",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "GPS Gate User",
+            "options": "GPS Gate User"
+        },
+        {
+            "fieldname": "user_id",
+            "fieldtype": "Int",
+            "in_list_view": 1,
+            "label": "User ID"
+        },
+        {
+            "fieldname": "username",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Username"
+        },
+        {
+            "fieldname": "full_name",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "label": "Full Name"
+        },
+        {
+            "fieldname": "added_on",
+            "fieldtype": "Datetime",
+            "label": "Added On"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "istable": 1,
+    "links": [],
+    "modified": "2026-01-26 11:15:00.000000",
+    "modified_by": "Administrator",
+    "module": "GPS GATE",
+    "name": "GPS Gate Group Member",
+    "owner": "Administrator",
+    "permissions": [],
+    "row_format": "Dynamic",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+}

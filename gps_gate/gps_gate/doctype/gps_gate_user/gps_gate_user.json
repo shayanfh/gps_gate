@@ -1,0 +1,347 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:gps_gate_id",
+ "creation": "2026-01-07 20:13:21.995536",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_info_section",
+  "username",
+  "first_name",
+  "last_name",
+  "full_name",
+  "email",
+  "column_break_basic",
+  "password",
+  "phone_number",
+  "driver_id",
+  "description",
+  "gps_gate_section",
+  "user_id",
+  "gps_gate_id",
+  "user_type_id",
+  "user_template_id",
+  "is_created_on_gps_gate",
+  "column_break_gps",
+  "orignal_application_id",
+  "sync_status",
+  "sync_error",
+  "last_synced_on",
+  "erp_link_section",
+  "erp_employee",
+  "vehicle",
+  "tracking_section",
+  "last_latitude",
+  "last_longitude",
+  "last_altitude",
+  "is_location_valid",
+  "column_break_tracking",
+  "last_utc_time",
+  "device_activity",
+  "calculated_speed",
+  "last_transport",
+  "section_break_ujcv",
+  "map_location",
+  "devices_section",
+  "gps_gate_device",
+  "raw_response_section",
+  "raw_response"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_info_section",
+   "fieldtype": "Section Break",
+   "label": "User Information"
+  },
+  {
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Username",
+   "reqd": 1
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "label": "First Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "Last Name"
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Full Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "column_break_basic",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Required when creating a new user on GPS Gate",
+   "fieldname": "password",
+   "fieldtype": "Password",
+   "hidden": 1,
+   "label": "Password"
+  },
+  {
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "label": "Phone Number"
+  },
+  {
+   "fieldname": "driver_id",
+   "fieldtype": "Data",
+   "label": "Driver ID"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "gps_gate_section",
+   "fieldtype": "Section Break",
+   "label": "GPS Gate Sync Information"
+  },
+  {
+   "fieldname": "user_id",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "GPS Gate User ID"
+  },
+  {
+   "fieldname": "gps_gate_id",
+   "fieldtype": "Int",
+   "label": "GPS Gate ID",
+   "unique": 1
+  },
+  {
+   "description": "GPS Gate User Type ID (e.g., 1 for Operator, 2 for Device User)",
+   "fieldname": "user_type_id",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "User Type",
+   "options": "GPS User Types"
+  },
+  {
+   "fieldname": "user_template_id",
+   "fieldtype": "Int",
+   "label": "User Template ID",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_created_on_gps_gate",
+   "fieldtype": "Check",
+   "label": "Is Created on GPS Gate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_gps",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "orignal_application_id",
+   "fieldtype": "Int",
+   "label": "Original Application ID",
+   "read_only": 1
+  },
+  {
+   "default": "Success",
+   "fieldname": "sync_status",
+   "fieldtype": "Select",
+   "label": "Sync Status",
+   "options": "\nSuccess\nFailed\nPending",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sync_error",
+   "fieldtype": "Long Text",
+   "label": "Sync Error",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_synced_on",
+   "fieldtype": "Datetime",
+   "label": "Last Synced On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "erp_link_section",
+   "fieldtype": "Section Break",
+   "label": "ERPNext Links"
+  },
+  {
+   "fieldname": "erp_employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "label": "Vehicle",
+   "options": "Vehicle"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "tracking_section",
+   "fieldtype": "Section Break",
+   "label": "Location & Tracking"
+  },
+  {
+   "fieldname": "last_latitude",
+   "fieldtype": "Float",
+   "label": "Last Latitude",
+   "precision": "9",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_longitude",
+   "fieldtype": "Float",
+   "label": "Last Longitude",
+   "precision": "9",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_altitude",
+   "fieldtype": "Float",
+   "label": "Last Altitude",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_location_valid",
+   "fieldtype": "Check",
+   "label": "Is Location Valid",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_tracking",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_utc_time",
+   "fieldtype": "Datetime",
+   "label": "Last GPS UTC Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "device_activity",
+   "fieldtype": "Datetime",
+   "label": "Last Device Activity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculated_speed",
+   "fieldtype": "Float",
+   "label": "Calculated Speed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_transport",
+   "fieldtype": "Data",
+   "label": "Last Transport",
+   "read_only": 1
+  },
+  {
+   "fieldname": "devices_section",
+   "fieldtype": "Section Break",
+   "label": "Devices"
+  },
+  {
+   "fieldname": "gps_gate_device",
+   "fieldtype": "Table",
+   "label": "GPS Gate Devices",
+   "options": "GPS Gate Device"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "raw_response_section",
+   "fieldtype": "Section Break",
+   "label": "Raw GPS Gate Response"
+  },
+  {
+   "fieldname": "raw_response",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Raw GPS Gate JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "map_location",
+   "fieldtype": "Geolocation",
+   "label": "Map Location"
+  },
+  {
+   "fieldname": "section_break_ujcv",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-03-14 14:27:56.726835",
+ "modified_by": "Administrator",
+ "module": "GPS GATE",
+ "name": "GPS Gate User",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "full_name",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "full_name",
+ "track_changes": 1
+}

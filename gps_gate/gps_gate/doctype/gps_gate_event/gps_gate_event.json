@@ -1,0 +1,419 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:event_id",
+ "creation": "2026-01-22 13:15:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_info_section",
+  "event_id",
+  "event_rule",
+  "event_rule_name",
+  "gps_gate_user",
+  "application_id",
+  "expression_evaluator_id",
+  "column_break_basic",
+  "event_time",
+  "event_time_utc",
+  "min_time",
+  "max_time",
+  "ongoing",
+  "closed",
+  "closed_time_stamp",
+  "support_ui",
+  "event_stage",
+  "acknowledged",
+  "severity",
+  "location_section",
+  "start_latitude",
+  "start_longitude",
+  "start_altitude",
+  "column_break_location",
+  "end_latitude",
+  "end_longitude",
+  "end_altitude",
+  "section_break_pzzx",
+  "map_location",
+  "position_section",
+  "latitude",
+  "longitude",
+  "altitude",
+  "speed",
+  "heading",
+  "address",
+  "bounding_box_section",
+  "bb_min_x",
+  "bb_max_x",
+  "bb_min_y",
+  "bb_max_y",
+  "bb_min_z",
+  "bb_max_z",
+  "details_section",
+  "event_message",
+  "comment",
+  "event_data",
+  "event_arguments_details_section",
+  "event_arguments",
+  "erp_link_section",
+  "linked_user",
+  "linked_vehicle",
+  "sync_section",
+  "last_synced_on",
+  "raw_response_section",
+  "raw_response"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_info_section",
+   "fieldtype": "Section Break",
+   "label": "Event Information"
+  },
+  {
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Event ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "event_rule",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_standard_filter": 1,
+   "label": "Event Rule",
+   "options": "GPS Gate Event Rule"
+  },
+  {
+   "fieldname": "event_rule_name",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Event Rule Name"
+  },
+  {
+   "fieldname": "gps_gate_user",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_standard_filter": 1,
+   "label": "GPS Gate User",
+   "options": "GPS Gate User"
+  },
+  {
+   "fieldname": "application_id",
+   "fieldtype": "Data",
+   "label": "Application ID"
+  },
+  {
+   "fieldname": "expression_evaluator_id",
+   "fieldtype": "Data",
+   "label": "Expression Evaluator ID"
+  },
+  {
+   "fieldname": "column_break_basic",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "event_time",
+   "fieldtype": "Datetime",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Event Time"
+  },
+  {
+   "fieldname": "event_time_utc",
+   "fieldtype": "Datetime",
+   "label": "Event Time (UTC)"
+  },
+  {
+   "fieldname": "min_time",
+   "fieldtype": "Datetime",
+   "label": "Min Time"
+  },
+  {
+   "fieldname": "max_time",
+   "fieldtype": "Datetime",
+   "label": "Max Time"
+  },
+  {
+   "default": "0",
+   "fieldname": "ongoing",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Ongoing"
+  },
+  {
+   "default": "0",
+   "fieldname": "closed",
+   "fieldtype": "Check",
+   "label": "Closed"
+  },
+  {
+   "fieldname": "closed_time_stamp",
+   "fieldtype": "Datetime",
+   "label": "Closed Time Stamp"
+  },
+  {
+   "default": "0",
+   "fieldname": "support_ui",
+   "fieldtype": "Check",
+   "label": "Support UI"
+  },
+  {
+   "fieldname": "event_stage",
+   "fieldtype": "Int",
+   "label": "Event Stage"
+  },
+  {
+   "default": "0",
+   "fieldname": "acknowledged",
+   "fieldtype": "Check",
+   "label": "Acknowledged"
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "\nInfo\nWarning\nCritical"
+  },
+  {
+   "fieldname": "location_section",
+   "fieldtype": "Section Break",
+   "label": "Start & End Position"
+  },
+  {
+   "fieldname": "start_latitude",
+   "fieldtype": "Float",
+   "label": "Start Latitude",
+   "precision": "9"
+  },
+  {
+   "fieldname": "start_longitude",
+   "fieldtype": "Float",
+   "label": "Start Longitude",
+   "precision": "9"
+  },
+  {
+   "fieldname": "start_altitude",
+   "fieldtype": "Float",
+   "label": "Start Altitude"
+  },
+  {
+   "fieldname": "column_break_location",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "end_latitude",
+   "fieldtype": "Float",
+   "label": "End Latitude",
+   "precision": "9"
+  },
+  {
+   "fieldname": "end_longitude",
+   "fieldtype": "Float",
+   "label": "End Longitude",
+   "precision": "9"
+  },
+  {
+   "fieldname": "end_altitude",
+   "fieldtype": "Float",
+   "label": "End Altitude"
+  },
+  {
+   "fieldname": "position_section",
+   "fieldtype": "Section Break",
+   "label": "Current Position & Movement"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "label": "Latitude",
+   "precision": "9"
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "label": "Longitude",
+   "precision": "9"
+  },
+  {
+   "fieldname": "altitude",
+   "fieldtype": "Float",
+   "label": "Altitude"
+  },
+  {
+   "fieldname": "speed",
+   "fieldtype": "Float",
+   "label": "Speed"
+  },
+  {
+   "fieldname": "heading",
+   "fieldtype": "Float",
+   "label": "Heading"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Small Text",
+   "label": "Address"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "bounding_box_section",
+   "fieldtype": "Section Break",
+   "label": "Bounding Box"
+  },
+  {
+   "fieldname": "bb_min_x",
+   "fieldtype": "Float",
+   "label": "Min X (Longitude)",
+   "precision": "9"
+  },
+  {
+   "fieldname": "bb_max_x",
+   "fieldtype": "Float",
+   "label": "Max X (Longitude)",
+   "precision": "9"
+  },
+  {
+   "fieldname": "bb_min_y",
+   "fieldtype": "Float",
+   "label": "Min Y (Latitude)",
+   "precision": "9"
+  },
+  {
+   "fieldname": "bb_max_y",
+   "fieldtype": "Float",
+   "label": "Max Y (Latitude)",
+   "precision": "9"
+  },
+  {
+   "fieldname": "bb_min_z",
+   "fieldtype": "Float",
+   "label": "Min Z (Altitude)"
+  },
+  {
+   "fieldname": "bb_max_z",
+   "fieldtype": "Float",
+   "label": "Max Z (Altitude)"
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Event Details"
+  },
+  {
+   "fieldname": "event_message",
+   "fieldtype": "Small Text",
+   "label": "Event Message"
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "label": "Comment"
+  },
+  {
+   "fieldname": "event_data",
+   "fieldtype": "Long Text",
+   "label": "Event Data (JSON)"
+  },
+  {
+   "fieldname": "erp_link_section",
+   "fieldtype": "Section Break",
+   "label": "ERPNext Links"
+  },
+  {
+   "fieldname": "linked_user",
+   "fieldtype": "Link",
+   "label": "Linked Employee",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "linked_vehicle",
+   "fieldtype": "Link",
+   "label": "Linked Vehicle",
+   "options": "Vehicle"
+  },
+  {
+   "fieldname": "sync_section",
+   "fieldtype": "Section Break",
+   "label": "Sync Information"
+  },
+  {
+   "fieldname": "last_synced_on",
+   "fieldtype": "Datetime",
+   "label": "Synced On",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "raw_response_section",
+   "fieldtype": "Section Break",
+   "label": "Raw GPS Gate Response"
+  },
+  {
+   "fieldname": "raw_response",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Raw GPS Gate JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_pzzx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "map_location",
+   "fieldtype": "Geolocation",
+   "label": "Map Location"
+  },
+  {
+   "fieldname": "event_arguments_details_section",
+   "fieldtype": "Section Break",
+   "label": "Event Arguments Details"
+  },
+  {
+   "fieldname": "event_arguments",
+   "fieldtype": "Table",
+   "label": "Event Arguments",
+   "options": "Event Arguments"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-03-25 10:47:34.912075",
+ "modified_by": "Administrator",
+ "module": "GPS GATE",
+ "name": "GPS Gate Event",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "show_preview_popup": 1,
+ "sort_field": "event_time",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

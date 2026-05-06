@@ -1,0 +1,124 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-07 20:07:38.826252",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "device_id",
+  "device_name",
+  "imei",
+  "protocol_id",
+  "protocol_version_id",
+  "msisdn",
+  "hide_position",
+  "owner_id",
+  "created_on",
+  "device_mapper_id",
+  "device_type_id",
+  "phone_number"
+ ],
+ "fields": [
+  {
+   "fieldname": "device_id",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Device ID"
+  },
+  {
+   "fieldname": "imei",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "IMEI"
+  },
+  {
+   "fieldname": "protocol_id",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Protocol ID"
+  },
+  {
+   "fieldname": "msisdn",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Msisdn"
+  },
+  {
+   "fieldname": "created_on",
+   "fieldtype": "Datetime",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Created On"
+  },
+  {
+   "fieldname": "device_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Device Name"
+  },
+  {
+   "fieldname": "protocol_version_id",
+   "fieldtype": "Int",
+   "label": "Protocol Version ID"
+  },
+  {
+   "default": "0",
+   "fieldname": "hide_position",
+   "fieldtype": "Check",
+   "label": "Hide Position"
+  },
+  {
+   "fieldname": "owner_id",
+   "fieldtype": "Int",
+   "label": "Owner ID"
+  },
+  {
+   "fieldname": "device_mapper_id",
+   "fieldtype": "Int",
+   "label": "Device Mapper ID"
+  },
+  {
+   "fieldname": "device_type_id",
+   "fieldtype": "Int",
+   "label": "Device Type ID"
+  },
+  {
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "label": "Phone Number"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-11 10:32:55.452764",
+ "modified_by": "Administrator",
+ "module": "GPS GATE",
+ "name": "GPS Gate Device",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
