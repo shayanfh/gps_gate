@@ -62,6 +62,82 @@ def sync_vehicle_status(docname):
     return {"status": "success", "message": _("Vehicle status synced from GPS Gate")}
 
 
+@frappe.whitelist()
+def sync_all_vehicle_status():
+    """
+    Fetch status for ALL vehicles in the application and create/update records.
+
+    Returns:
+        dict: Result with synced/updated counts
+    """
+    from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError
+    from gps_gate.apis.sync_user import sanitize_datetime
+
+    try:
+        client = get_gps_gate_client()
+        vehicles = client.get_users_status(kind="Asset")
+    except GPSGateAPIError as e:
+        frappe.throw(str(e.message))
+    except Exception as e:
+        frappe.log_error(title="Vehicle Status Sync All Error", message=frappe.get_traceback())
+        frappe.throw(_("Failed to fetch vehicle statuses: {0}").format(str(e)))
+
+    if not vehicles:
+        return {"status": "success", "synced": 0, "updated": 0, "total": 0,
+                "message": _("No vehicles returned from GPS Gate")}
+
+    synced = 0
+    updated = 0
+    errors = []
+
+    for v in vehicles:
+        try:
+            gps_user_id = v.get("id")
+            if not gps_user_id:
+                continue
+
+            # Find the linked GPS Gate User document
+            gps_user_name = frappe.db.get_value(
+                "GPS Gate User", {"gps_gate_id": gps_user_id}, "name"
+            )
+            if not gps_user_name:
+                continue
+
+            existing = frappe.db.get_value(
+                "GPS Gate Vehicle Status", {"gps_gate_user": gps_user_name}, "name"
+            )
+
+            if existing:
+                doc = frappe.get_doc("GPS Gate Vehicle Status", existing)
+                updated += 1
+            else:
+                doc = frappe.new_doc("GPS Gate Vehicle Status")
+                doc.gps_gate_user = gps_user_name
+                synced += 1
+
+            _update_doc_from_data(doc, v)
+            doc.last_synced_on = now()
+            doc.save(ignore_permissions=True)
+
+        except Exception:
+            errors.append(str(v.get("id")))
+            frappe.log_error(title="Vehicle Status Sync Error", message=frappe.get_traceback())
+
+    frappe.db.commit()
+
+    total = len(vehicles)
+    result = {
+        "status": "success" if not errors else "partial",
+        "synced": synced,
+        "updated": updated,
+        "total": total,
+        "message": _("Created {0}, updated {1} of {2} vehicles").format(synced, updated, total)
+    }
+    if errors:
+        result["errors"] = errors[:10]
+    return result
+
+
 def _update_doc_from_data(doc, data):
     from gps_gate.apis.sync_user import sanitize_datetime
 
