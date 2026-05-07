@@ -8,6 +8,17 @@ frappe.listview_settings["GPS Gate Trip Info"] = {
                 title: __("Sync Trips from GPS Gate"),
                 fields: [
                     {
+                        label: __("All Users"),
+                        fieldname: "all_users",
+                        fieldtype: "Check",
+                        default: 0,
+                        onchange: function () {
+                            let all = d.get_value("all_users");
+                            d.set_df_property("gps_gate_user", "hidden", all ? 1 : 0);
+                            d.set_df_property("gps_gate_user", "reqd", all ? 0 : 1);
+                        }
+                    },
+                    {
                         label: __("GPS Gate User"),
                         fieldname: "gps_gate_user",
                         fieldtype: "Link",
@@ -15,21 +26,32 @@ frappe.listview_settings["GPS Gate Trip Info"] = {
                         reqd: 1
                     },
                     {
-                        label: __("Date"),
-                        fieldname: "date",
+                        fieldtype: "Column Break"
+                    },
+                    {
+                        label: __("From Date"),
+                        fieldname: "from_date",
                         fieldtype: "Date",
                         default: frappe.datetime.get_today(),
                         reqd: 1
+                    },
+                    {
+                        label: __("To Date"),
+                        fieldname: "to_date",
+                        fieldtype: "Date",
+                        default: frappe.datetime.get_today(),
+                        description: __("Leave same as From Date for a single day")
                     }
                 ],
                 primary_action_label: __("Sync"),
                 primary_action: function (values) {
                     d.hide();
                     frappe.call({
-                        method: "gps_gate.gps_gate.doctype.gps_gate_trip_info.gps_gate_trip_info.sync_trips_for_date",
+                        method: "gps_gate.gps_gate.doctype.gps_gate_trip_info.gps_gate_trip_info.sync_trips_batch",
                         args: {
-                            gps_gate_user: values.gps_gate_user,
-                            date: values.date
+                            from_date: values.from_date,
+                            to_date: values.to_date || values.from_date,
+                            gps_gate_user: values.all_users ? null : values.gps_gate_user
                         },
                         freeze: true,
                         freeze_message: __("Syncing trips from GPS Gate..."),

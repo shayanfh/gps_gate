@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import json
+from datetime import date as dt, timedelta
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -19,14 +20,13 @@ class GPSGateTripInfo(Document):
             except Exception:
                 pass
 
-        # Build map with LineString from start to end
+        # Build map: LineString start → end, or single point
         has_start = self.start_latitude and self.start_longitude
         has_end = self.end_latitude and self.end_longitude
 
         if has_start and has_end:
             slat, slng = float(self.start_latitude), float(self.start_longitude)
             elat, elng = float(self.end_latitude), float(self.end_longitude)
-
             self.map_location = json.dumps({
                 "type": "FeatureCollection",
                 "features": [
@@ -62,40 +62,26 @@ class GPSGateTripInfo(Document):
             })
 
 
-@frappe.whitelist()
-def sync_trips_for_date(gps_gate_user, date):
+# ── internal helper ────────────────────────────────────────────────────────────
+
+def _sync_user_date_trips(gps_gate_user_name, gps_user_id, date_str, client):
     """
-    Fetch all trips for a GPS Gate user on a given date and sync to ERPNext.
+    Sync trips for ONE user on ONE date.
     Creates new records; updates existing ones matched by track_info_id.
-
-    Args:
-        gps_gate_user: GPS Gate User document name
-        date: Date string in YYYY-MM-DD format
-
-    Returns:
-        dict: Result with synced/updated counts and total
+    Returns dict: {synced, updated, total, errors}
     """
-    from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError
     from gps_gate.apis.sync_user import sanitize_datetime
 
-    gps_user = frappe.get_doc("GPS Gate User", gps_gate_user)
-    gps_user_id = gps_user.gps_gate_id or int(gps_user.name)
-
     try:
-        client = get_gps_gate_client()
-        trips = client.get_user_trip_infos(gps_user_id, date)
-    except GPSGateAPIError as e:
-        frappe.throw(str(e.message))
-    except Exception as e:
-        frappe.log_error(title="Trip Info Sync Error", message=frappe.get_traceback())
-        frappe.throw(_("Failed to fetch trips: {0}").format(str(e)))
+        trips = client.get_user_trip_infos(gps_user_id, date_str)
+    except Exception:
+        frappe.log_error(title="Trip Fetch Error", message=frappe.get_traceback())
+        return {"synced": 0, "updated": 0, "total": 0, "errors": [date_str]}
 
     if not trips:
-        return {"status": "success", "synced": 0, "updated": 0, "total": 0,
-                "message": _("No trips found for this date")}
+        return {"synced": 0, "updated": 0, "total": 0, "errors": []}
 
-    synced = 0
-    updated = 0
+    synced = updated = 0
     errors = []
 
     for trip in trips:
@@ -120,7 +106,7 @@ def sync_trips_for_date(gps_gate_user, date):
                 updated += 1
             else:
                 doc = frappe.new_doc("GPS Gate Trip Info")
-                doc.gps_gate_user = gps_gate_user
+                doc.gps_gate_user = gps_gate_user_name
                 doc.track_info_id = trip_id
                 synced += 1
 
@@ -128,19 +114,16 @@ def sync_trips_for_date(gps_gate_user, date):
             doc.distance = trip.get("totalDistance")
             doc.start_time = sanitize_datetime(start_tp.get("utc"))
             doc.end_time = sanitize_datetime(end_tp.get("utc"))
-
             doc.start_latitude = start_pos.get("latitude")
             doc.start_longitude = start_pos.get("longitude")
             doc.start_altitude = start_pos.get("altitude")
             doc.start_speed = start_vel.get("groundSpeed")
             doc.start_heading = start_vel.get("heading")
-
             doc.end_latitude = end_pos.get("latitude")
             doc.end_longitude = end_pos.get("longitude")
             doc.end_altitude = end_pos.get("altitude")
             doc.end_speed = end_vel.get("groundSpeed")
             doc.end_heading = end_vel.get("heading")
-
             doc.raw_response = frappe.as_json(trip)
             doc.last_synced_on = now()
             doc.save(ignore_permissions=True)
@@ -149,16 +132,108 @@ def sync_trips_for_date(gps_gate_user, date):
             errors.append(str(trip.get("trackInfoId")))
             frappe.log_error(title="Trip Info Save Error", message=frappe.get_traceback())
 
+    return {"synced": synced, "updated": updated, "total": len(trips), "errors": errors}
+
+
+# ── whitelisted endpoints ───────────────────────────────────────────────────────
+
+@frappe.whitelist()
+def sync_trips_for_date(gps_gate_user, date):
+    """
+    Sync trips for a SINGLE GPS Gate user on a single date.
+    Called from the form view.
+    """
+    from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError
+
+    gps_user = frappe.get_doc("GPS Gate User", gps_gate_user)
+    gps_user_id = gps_user.gps_gate_id or int(gps_user.name)
+
+    try:
+        client = get_gps_gate_client()
+    except GPSGateAPIError as e:
+        frappe.throw(str(e.message))
+
+    result = _sync_user_date_trips(gps_gate_user, gps_user_id, date, client)
     frappe.db.commit()
 
-    total = len(trips)
-    result = {
-        "status": "success" if not errors else "partial",
-        "synced": synced,
-        "updated": updated,
-        "total": total,
-        "message": _("Created {0}, updated {1} of {2} trips").format(synced, updated, total)
+    return {
+        "status": "success" if not result["errors"] else "partial",
+        **result,
+        "message": _("Created {0}, updated {1} of {2} trips").format(
+            result["synced"], result["updated"], result["total"]
+        )
     }
-    if errors:
-        result["errors"] = errors[:10]
-    return result
+
+
+@frappe.whitelist()
+def sync_trips_batch(from_date, to_date=None, gps_gate_user=None):
+    """
+    Sync trips across a date range.
+    If gps_gate_user is empty/None → syncs ALL GPS Gate Users.
+    Called from the list view.
+
+    Args:
+        from_date: Start date (YYYY-MM-DD)
+        to_date: End date (YYYY-MM-DD). Defaults to from_date (single day)
+        gps_gate_user: GPS Gate User doc name, or None/empty for all users
+    """
+    from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError
+
+    try:
+        client = get_gps_gate_client()
+    except GPSGateAPIError as e:
+        frappe.throw(str(e.message))
+
+    # Resolve user list
+    if gps_gate_user:
+        gps_user_doc = frappe.get_doc("GPS Gate User", gps_gate_user)
+        users = [{"name": gps_user_doc.name,
+                  "gps_gate_id": gps_user_doc.gps_gate_id or int(gps_user_doc.name)}]
+    else:
+        rows = frappe.get_all(
+            "GPS Gate User",
+            filters={"gps_gate_id": ["is", "set"]},
+            fields=["name", "gps_gate_id"]
+        )
+        users = [{"name": r.name, "gps_gate_id": r.gps_gate_id} for r in rows]
+
+    if not users:
+        return {"status": "success", "message": _("No GPS Gate Users found"), "synced": 0}
+
+    # Build date range
+    start = dt.fromisoformat(from_date)
+    end = dt.fromisoformat(to_date) if to_date else start
+
+    total_synced = total_updated = total_trips = 0
+    user_errors = []
+
+    current = start
+    while current <= end:
+        date_str = str(current)
+        for u in users:
+            try:
+                r = _sync_user_date_trips(u["name"], u["gps_gate_id"], date_str, client)
+                total_synced += r["synced"]
+                total_updated += r["updated"]
+                total_trips += r["total"]
+                if r["errors"]:
+                    user_errors.append(f'{u["name"]} / {date_str}')
+            except Exception:
+                user_errors.append(f'{u["name"]} / {date_str}')
+                frappe.log_error(title="Batch Trip Sync Error", message=frappe.get_traceback())
+        current += timedelta(days=1)
+
+    frappe.db.commit()
+
+    days = (end - start).days + 1
+    return {
+        "status": "success" if not user_errors else "partial",
+        "synced": total_synced,
+        "updated": total_updated,
+        "total": total_trips,
+        "users": len(users),
+        "days": days,
+        "message": _("Created {0}, updated {1} trips across {2} user(s) over {3} day(s)").format(
+            total_synced, total_updated, len(users), days
+        )
+    }
