@@ -9,9 +9,12 @@
   "basic_info_section",
   "gps_gate_user",
   "track_time",
+  "track_info_id",
   "column_break_basic",
   "speed",
   "heading",
+  "is_valid",
+  "server_utc",
   "position_section",
   "latitude",
   "longitude",
@@ -50,8 +53,15 @@
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Track Time",
+   "label": "GPS UTC Time",
    "reqd": 1
+  },
+  {
+   "fieldname": "track_info_id",
+   "fieldtype": "Int",
+   "in_filter": 1,
+   "in_standard_filter": 1,
+   "label": "Trip / Session ID"
   },
   {
    "fieldname": "column_break_basic",
@@ -61,13 +71,24 @@
    "fieldname": "speed",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Speed"
+   "label": "Ground Speed"
   },
   {
    "fieldname": "heading",
    "fieldtype": "Float",
-   "in_list_view": 1,
    "label": "Heading"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_valid",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Valid GPS Fix"
+  },
+  {
+   "fieldname": "server_utc",
+   "fieldtype": "Datetime",
+   "label": "Server UTC"
   },
   {
    "fieldname": "position_section",

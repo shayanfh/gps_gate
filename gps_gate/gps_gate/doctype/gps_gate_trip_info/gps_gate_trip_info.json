@@ -1,29 +1,35 @@
 {
  "actions": [],
  "allow_rename": 0,
- "autoname": "GPS-TI-.YYYY.-.#####",
+ "autoname": "field:track_info_id",
  "creation": "2026-05-07 09:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "trip_info_section",
   "gps_gate_user",
+  "track_info_id",
+  "is_idle",
+  "column_break_trip",
   "start_time",
   "end_time",
-  "column_break_trip",
   "duration",
-  "distance",
   "stats_section",
-  "max_speed",
-  "average_speed",
-  "location_section",
+  "distance",
+  "start_location_section",
   "start_latitude",
   "start_longitude",
   "start_altitude",
-  "column_break_location",
+  "column_break_start",
+  "start_speed",
+  "start_heading",
+  "end_location_section",
   "end_latitude",
   "end_longitude",
   "end_altitude",
+  "column_break_end",
+  "end_speed",
+  "end_heading",
   "section_break_map",
   "map_location",
   "erp_link_section",
@@ -53,6 +59,30 @@
    "reqd": 1
   },
   {
+   "fieldname": "track_info_id",
+   "fieldtype": "Int",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Trip ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_idle",
+   "fieldtype": "Check",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Is Idle"
+  },
+  {
+   "fieldname": "column_break_trip",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "start_time",
    "fieldtype": "Datetime",
    "in_filter": 1,
@@ -71,42 +101,27 @@
    "label": "End Time"
   },
   {
-   "fieldname": "column_break_trip",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "duration",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Duration (seconds)"
+   "label": "Duration (seconds)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stats_section",
+   "fieldtype": "Section Break",
+   "label": "Distance"
   },
   {
    "fieldname": "distance",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Distance (meters)"
+   "label": "Total Distance (meters)"
   },
   {
-   "fieldname": "stats_section",
+   "fieldname": "start_location_section",
    "fieldtype": "Section Break",
-   "label": "Speed Statistics"
-  },
-  {
-   "fieldname": "max_speed",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Max Speed"
-  },
-  {
-   "fieldname": "average_speed",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Average Speed"
-  },
-  {
-   "fieldname": "location_section",
-   "fieldtype": "Section Break",
-   "label": "Start & End Position"
+   "label": "Start Position"
   },
   {
    "fieldname": "start_latitude",
@@ -126,8 +141,23 @@
    "label": "Start Altitude"
   },
   {
-   "fieldname": "column_break_location",
+   "fieldname": "column_break_start",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_speed",
+   "fieldtype": "Float",
+   "label": "Start Speed"
+  },
+  {
+   "fieldname": "start_heading",
+   "fieldtype": "Float",
+   "label": "Start Heading"
+  },
+  {
+   "fieldname": "end_location_section",
+   "fieldtype": "Section Break",
+   "label": "End Position"
   },
   {
    "fieldname": "end_latitude",
@@ -145,6 +175,20 @@
    "fieldname": "end_altitude",
    "fieldtype": "Float",
    "label": "End Altitude"
+  },
+  {
+   "fieldname": "column_break_end",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "end_speed",
+   "fieldtype": "Float",
+   "label": "End Speed"
+  },
+  {
+   "fieldname": "end_heading",
+   "fieldtype": "Float",
+   "label": "End Heading"
   },
   {
    "fieldname": "section_break_map",
@@ -204,7 +248,7 @@
  "modified_by": "Administrator",
  "module": "GPS GATE",
  "name": "GPS Gate Trip Info",
- "naming_rule": "Expression (old-style)",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

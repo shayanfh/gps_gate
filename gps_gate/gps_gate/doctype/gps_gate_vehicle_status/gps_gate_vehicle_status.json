@@ -9,6 +9,7 @@
   "status_info_section",
   "gps_gate_user",
   "user_name",
+  "username",
   "online_status",
   "column_break_status",
   "device_time",
@@ -22,6 +23,8 @@
   "heading",
   "section_break_map",
   "map_location",
+  "variables_section",
+  "variables_data",
   "erp_link_section",
   "linked_vehicle",
   "erp_employee",
@@ -55,7 +58,15 @@
    "in_global_search": 1,
    "in_list_view": 1,
    "in_preview": 1,
-   "label": "Vehicle / User Name"
+   "label": "Vehicle Name"
+  },
+  {
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_standard_filter": 1,
+   "label": "Username"
   },
   {
    "fieldname": "online_status",
@@ -76,12 +87,12 @@
    "in_filter": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Device Time"
+   "label": "GPS UTC Time"
   },
   {
    "fieldname": "server_time",
    "fieldtype": "Datetime",
-   "label": "Server Time"
+   "label": "Device Activity"
   },
   {
    "fieldname": "position_section",
@@ -112,7 +123,7 @@
   {
    "fieldname": "speed",
    "fieldtype": "Float",
-   "label": "Speed"
+   "label": "Ground Speed"
   },
   {
    "fieldname": "heading",
@@ -127,6 +138,17 @@
    "fieldname": "map_location",
    "fieldtype": "Geolocation",
    "label": "Map Location"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "variables_section",
+   "fieldtype": "Section Break",
+   "label": "Device Variables"
+  },
+  {
+   "fieldname": "variables_data",
+   "fieldtype": "Long Text",
+   "label": "Variables (JSON)"
   },
   {
    "fieldname": "erp_link_section",
