@@ -8,11 +8,12 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now, get_datetime
 
+CHUNK_SIZE = 1000
+
 
 class GPSGateTripInfo(Document):
 
     def before_save(self):
-        # Calculate duration from start/end times
         if self.start_time and self.end_time:
             try:
                 delta = get_datetime(self.end_time) - get_datetime(self.start_time)
@@ -20,7 +21,6 @@ class GPSGateTripInfo(Document):
             except Exception:
                 pass
 
-        # Build map: LineString start → end, or single point
         has_start = self.start_latitude and self.start_longitude
         has_end = self.end_latitude and self.end_longitude
 
@@ -62,12 +62,12 @@ class GPSGateTripInfo(Document):
             })
 
 
-# ── internal helper ────────────────────────────────────────────────────────────
+# ── internal helper ─────────────────────────────────────────────────────────────
 
 def _sync_user_date_trips(gps_gate_user_name, gps_user_id, date_str, client):
     """
     Sync trips for ONE user on ONE date.
-    Creates new records; updates existing ones matched by track_info_id.
+    Saves in chunks of CHUNK_SIZE to prevent timeouts.
     Returns dict: {synced, updated, total, errors}
     """
     from gps_gate.apis.sync_user import sanitize_datetime
@@ -83,6 +83,7 @@ def _sync_user_date_trips(gps_gate_user_name, gps_user_id, date_str, client):
 
     synced = updated = 0
     errors = []
+    chunk_count = 0
 
     for trip in trips:
         try:
@@ -127,64 +128,38 @@ def _sync_user_date_trips(gps_gate_user_name, gps_user_id, date_str, client):
             doc.raw_response = frappe.as_json(trip)
             doc.last_synced_on = now()
             doc.save(ignore_permissions=True)
+            chunk_count += 1
+
+            # commit every CHUNK_SIZE saves to release DB locks
+            if chunk_count >= CHUNK_SIZE:
+                frappe.db.commit()
+                chunk_count = 0
 
         except Exception:
             errors.append(str(trip.get("trackInfoId")))
             frappe.log_error(title="Trip Info Save Error", message=frappe.get_traceback())
 
+    if chunk_count > 0:
+        frappe.db.commit()
+
     return {"synced": synced, "updated": updated, "total": len(trips), "errors": errors}
 
 
-# ── whitelisted endpoints ───────────────────────────────────────────────────────
+# ── background worker ────────────────────────────────────────────────────────────
 
-@frappe.whitelist()
-def sync_trips_for_date(gps_gate_user, date):
+def _run_trips_batch_job(from_date, to_date, gps_gate_user=""):
     """
-    Sync trips for a SINGLE GPS Gate user on a single date.
-    Called from the form view.
-    """
-    from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError
-
-    gps_user = frappe.get_doc("GPS Gate User", gps_gate_user)
-    gps_user_id = gps_user.gps_gate_id or int(gps_user.name)
-
-    try:
-        client = get_gps_gate_client()
-    except GPSGateAPIError as e:
-        frappe.throw(str(e.message))
-
-    result = _sync_user_date_trips(gps_gate_user, gps_user_id, date, client)
-    frappe.db.commit()
-
-    return {
-        "status": "success" if not result["errors"] else "partial",
-        **result,
-        "message": _("Created {0}, updated {1} of {2} trips").format(
-            result["synced"], result["updated"], result["total"]
-        )
-    }
-
-
-@frappe.whitelist()
-def sync_trips_batch(from_date, to_date=None, gps_gate_user=None):
-    """
-    Sync trips across a date range.
-    If gps_gate_user is empty/None → syncs ALL GPS Gate Users.
-    Called from the list view.
-
-    Args:
-        from_date: Start date (YYYY-MM-DD)
-        to_date: End date (YYYY-MM-DD). Defaults to from_date (single day)
-        gps_gate_user: GPS Gate User doc name, or None/empty for all users
+    Background worker: sync trips across users and date range.
+    Enqueued by sync_trips_batch — never call directly from the browser.
     """
     from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError
 
     try:
         client = get_gps_gate_client()
     except GPSGateAPIError as e:
-        frappe.throw(str(e.message))
+        frappe.log_error(title="Batch Trip Sync — Client Error", message=str(e.message))
+        return
 
-    # Resolve user list
     if gps_gate_user:
         gps_user_doc = frappe.get_doc("GPS Gate User", gps_gate_user)
         users = [{"name": gps_user_doc.name,
@@ -198,14 +173,11 @@ def sync_trips_batch(from_date, to_date=None, gps_gate_user=None):
         users = [{"name": r.name, "gps_gate_id": r.gps_gate_id} for r in rows]
 
     if not users:
-        return {"status": "success", "message": _("No GPS Gate Users found"), "synced": 0}
+        return
 
-    # Build date range
     start = dt.fromisoformat(from_date)
-    end = dt.fromisoformat(to_date) if to_date else start
-
-    total_synced = total_updated = total_trips = 0
-    user_errors = []
+    end = dt.fromisoformat(to_date)
+    total_synced = total_updated = 0
 
     current = start
     while current <= end:
@@ -215,25 +187,78 @@ def sync_trips_batch(from_date, to_date=None, gps_gate_user=None):
                 r = _sync_user_date_trips(u["name"], u["gps_gate_id"], date_str, client)
                 total_synced += r["synced"]
                 total_updated += r["updated"]
-                total_trips += r["total"]
-                if r["errors"]:
-                    user_errors.append(f'{u["name"]} / {date_str}')
             except Exception:
-                user_errors.append(f'{u["name"]} / {date_str}')
-                frappe.log_error(title="Batch Trip Sync Error", message=frappe.get_traceback())
+                frappe.log_error(
+                    title="Batch Trip Sync Error",
+                    message=f"User: {u['name']} | Date: {date_str}\n{frappe.get_traceback()}"
+                )
         current += timedelta(days=1)
 
-    frappe.db.commit()
-
     days = (end - start).days + 1
+    frappe.log_error(
+        title="Batch Trip Sync — Done",
+        message=f"Created {total_synced}, updated {total_updated} across {len(users)} user(s) over {days} day(s)"
+    )
+
+
+# ── whitelisted endpoints ────────────────────────────────────────────────────────
+
+@frappe.whitelist()
+def sync_trips_for_date(gps_gate_user, date):
+    """
+    Sync trips for a SINGLE user on a single date.
+    Runs synchronously — called from the form view.
+    """
+    from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError
+
+    gps_user = frappe.get_doc("GPS Gate User", gps_gate_user)
+    gps_user_id = gps_user.gps_gate_id or int(gps_user.name)
+
+    try:
+        client = get_gps_gate_client()
+        result = _sync_user_date_trips(gps_gate_user, gps_user_id, date, client)
+    except GPSGateAPIError as e:
+        frappe.throw(str(e.message))
+        return  # unreachable — throw always raises
+
     return {
-        "status": "success" if not user_errors else "partial",
-        "synced": total_synced,
-        "updated": total_updated,
-        "total": total_trips,
-        "users": len(users),
-        "days": days,
-        "message": _("Created {0}, updated {1} trips across {2} user(s) over {3} day(s)").format(
-            total_synced, total_updated, len(users), days
+        "status": "success" if not result["errors"] else "partial",
+        **result,
+        "message": _("Created {0}, updated {1} of {2} trips").format(
+            result["synced"], result["updated"], result["total"]
+        )
+    }
+
+
+@frappe.whitelist()
+def sync_trips_batch(from_date, to_date=None, gps_gate_user=None):
+    """
+    Queue a background job to sync trips across a date range.
+    Returns immediately — processing happens in the background.
+
+    Args:
+        from_date: Start date (YYYY-MM-DD)
+        to_date: End date (YYYY-MM-DD). Defaults to from_date
+        gps_gate_user: GPS Gate User doc name, or None/empty for all users
+    """
+    to_date = to_date or from_date
+    gps_gate_user = gps_gate_user or ""
+
+    days = (dt.fromisoformat(to_date) - dt.fromisoformat(from_date)).days + 1
+
+    frappe.enqueue(
+        "gps_gate.gps_gate.doctype.gps_gate_trip_info.gps_gate_trip_info._run_trips_batch_job",
+        queue="long",
+        timeout=7200,
+        from_date=from_date,
+        to_date=to_date,
+        gps_gate_user=gps_gate_user
+    )
+
+    user_label = gps_gate_user if gps_gate_user else _("all users")
+    return {
+        "status": "queued",
+        "message": _("Sync started in background for {0} over {1} day(s). Refresh the list in a few minutes.").format(
+            user_label, days
         )
     }
