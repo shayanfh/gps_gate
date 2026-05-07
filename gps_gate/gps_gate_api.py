@@ -553,77 +553,116 @@ class GPSGateClient:
 
     # ========== VEHICLE STATUS & TRACKING API METHODS ==========
 
-    def get_users_status(self):
+    def get_users_status(self, from_index=0, page_size=1000, group_id=None,
+                         updates_from=None, kind=None, name=None):
         """
         Get the current status of all vehicles/users in the application.
 
         Endpoint: GET /applications/{applicationid}/usersstatus
 
-        Returns:
-            list: List of user status dictionaries, each containing:
-                - id: User ID
-                - name: User/vehicle name
-                - position: Current location data (latitude, longitude, altitude)
-                - speed: Current speed
-                - heading: Current heading/direction
-                - deviceTime: Timestamp of the last device update
-                - serverTime: Timestamp when the server received the update
-                - status: Online/offline status
-        """
-        return self._make_request("GET", "usersstatus")
+        Args:
+            from_index: Paging start index (default 0)
+            page_size: Number of records per page (default 1000)
+            group_id: Filter by GPS Gate group/tag ID
+            updates_from: Only users active after this timestamp (RFC3339, e.g. '2026-05-07T08:00:00Z')
+            kind: Filter by user kind, e.g. 'Asset' for vehicles
+            name: Case-insensitive name filter
 
-    def get_user_tracks(self, user_id, from_date, to_date, max_count=None):
+        Returns:
+            list: List of UserStatusModel dicts, each containing:
+                - id: User ID
+                - name: Vehicle/user name
+                - position: {latitude, longitude, altitude, speed, heading, valid, timestamp}
+                - variables: {speed, ignition, odometer, fuelLevel, satellites, ...}
         """
-        Get GPS track points for a specific vehicle/user within a date range.
+        params = [f"FromIndex={from_index}", f"PageSize={page_size}"]
+
+        if group_id is not None:
+            params.append(f"GroupId={group_id}")
+        if updates_from:
+            params.append(f"UpdatesFrom={updates_from}")
+        if kind:
+            params.append(f"Kind={kind}")
+        if name:
+            params.append(f"Name={name}")
+
+        query_string = "&".join(params)
+        return self._make_request("GET", f"usersstatus?{query_string}")
+
+    def get_user_status(self, user_id):
+        """
+        Get the current status of a single vehicle/user.
+
+        Endpoint: GET /applications/{applicationid}/users/{userid}/status
+
+        Args:
+            user_id: GPS Gate user ID
+
+        Returns:
+            dict: UserStatusModel containing:
+                - id: User ID
+                - name: Vehicle/user name
+                - position: {latitude, longitude, altitude, speed, heading, valid, timestamp}
+                - variables: {speed, ignition, fuelLevel, odometer, ...}
+        """
+        return self._make_request("GET", f"users/{user_id}/status")
+
+    def get_user_tracks(self, user_id, date, from_time=None, until_time=None, filtered=None):
+        """
+        Get GPS track points for a specific vehicle/user for a given date.
 
         Endpoint: GET /applications/{applicationid}/users/{userid}/tracks
 
         Args:
             user_id: GPS Gate user ID
-            from_date: Start datetime in ISO 8601 format (e.g., '2025-11-20T00:00:00Z')
-            to_date: End datetime in ISO 8601 format (e.g., '2025-11-20T23:59:59Z')
-            max_count: Optional - Maximum number of track points to return
+            date: Local date string (e.g. '2026-05-07')
+            from_time: Start time string (e.g. '00:00:00'). Default: 00:00:00
+            until_time: End time string (e.g. '23:59:59'). Default: 23:59:59
+            filtered: Boolean — use filtered track reader (default True on server)
 
         Returns:
-            list: List of track point dictionaries, each containing:
-                - time: Timestamp of the track point
-                - position: Location data (latitude, longitude, altitude)
-                - speed: Speed at this track point
-                - heading: Direction/heading at this track point
+            list: List of TrackModel dicts, each containing:
+                - timestamp: Track point datetime (UTC)
+                - latitude, longitude, altitude: Position
+                - speed: Speed at this point
+                - heading: Direction/heading
+                - valid: Whether the GPS fix is valid
+                - variables: {ignition, fuelLevel, ...}
         """
-        params = [f"from={from_date}", f"to={to_date}"]
+        params = [f"Date={date}"]
 
-        if max_count:
-            params.append(f"maxCount={max_count}")
+        if from_time:
+            params.append(f"From={from_time}")
+        if until_time:
+            params.append(f"Until={until_time}")
+        if filtered is not None:
+            params.append(f"Filtered={'true' if filtered else 'false'}")
 
         query_string = "&".join(params)
         return self._make_request("GET", f"users/{user_id}/tracks?{query_string}")
 
-    def get_user_trip_infos(self, user_id, from_date, to_date):
+    def get_user_trip_infos(self, user_id, date):
         """
-        Get trip summary information for a specific vehicle/user within a date range.
+        Get trip summary information for a specific vehicle/user for a given date.
 
         Endpoint: GET /applications/{applicationid}/users/{userid}/tripinfos
 
         Args:
             user_id: GPS Gate user ID
-            from_date: Start datetime in ISO 8601 format (e.g., '2025-11-20T00:00:00Z')
-            to_date: End datetime in ISO 8601 format (e.g., '2025-11-20T23:59:59Z')
+            date: Local date string (e.g. '2026-05-07')
 
         Returns:
-            list: List of trip summary dictionaries, each containing:
-                - startTime: Trip start timestamp
-                - endTime: Trip end timestamp
-                - startPosition: Starting location (latitude, longitude, altitude)
-                - endPosition: Ending location (latitude, longitude, altitude)
-                - distance: Total trip distance (in meters)
+            list: List of TripInfoModel dicts, each containing:
+                - id: Trip ID
+                - startTime, endTime: Trip start/end timestamps (UTC)
+                - distance: Total distance in km (or meters — check your server config)
+                - duration: Total trip duration in seconds
                 - maxSpeed: Maximum speed during the trip
                 - averageSpeed: Average speed during the trip
-                - duration: Total trip duration in seconds
+                - startPosition: {latitude, longitude}
+                - endPosition: {latitude, longitude}
         """
-        params = [f"from={from_date}", f"to={to_date}"]
-        query_string = "&".join(params)
-        return self._make_request("GET", f"users/{user_id}/tripinfos?{query_string}")
+        return self._make_request("GET", f"users/{user_id}/tripinfos?Date={date}")
 
 
 def get_gps_gate_client():
