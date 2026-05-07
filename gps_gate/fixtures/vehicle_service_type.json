@@ -1,0 +1,104 @@
+[
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Oil Change",
+  "category": "Oil",
+  "description": "Regular engine oil replacement to maintain lubrication and engine health"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Oil Filter Change",
+  "category": "Oil",
+  "description": "Replacement of the engine oil filter to remove contaminants from the oil"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Air Filter Change",
+  "category": "Mechanical",
+  "description": "Replacement of the engine air filter to ensure clean air intake"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Fuel Filter Change",
+  "category": "Mechanical",
+  "description": "Replacement of the fuel filter to protect the engine from fuel impurities"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Brake Inspection",
+  "category": "Safety",
+  "description": "Inspection of brake pads, rotors, calipers, and brake fluid levels"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Brake Pad Replacement",
+  "category": "Safety",
+  "description": "Replacement of worn brake pads to maintain braking performance"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Tire Rotation",
+  "category": "Tire",
+  "description": "Rotating tires between positions to ensure even wear and extend tire life"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Tire Replacement",
+  "category": "Tire",
+  "description": "Full replacement of one or more tires due to wear or damage"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Tire Inspection",
+  "category": "Tire",
+  "description": "Visual and pressure inspection of all tires including spare"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Battery Check",
+  "category": "Mechanical",
+  "description": "Testing battery voltage, charge capacity, and terminal condition"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Engine Inspection",
+  "category": "Mechanical",
+  "description": "Comprehensive inspection of engine components, belts, and hoses"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Gearbox Oil Change",
+  "category": "Oil",
+  "description": "Replacement of transmission / gearbox oil to prevent wear and overheating"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Coolant Check",
+  "category": "Mechanical",
+  "description": "Inspection and top-up of engine coolant / antifreeze level"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Insurance Renewal",
+  "category": "Legal",
+  "description": "Renewal of vehicle insurance policy before expiry"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Registration Renewal",
+  "category": "Legal",
+  "description": "Renewal of vehicle registration / road tax with the traffic authority"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "Vehicle Inspection",
+  "category": "Safety",
+  "description": "Official or internal roadworthiness inspection of the vehicle"
+ },
+ {
+  "doctype": "Vehicle Service Type",
+  "service_name": "GPS Device Check",
+  "category": "Other",
+  "description": "Verification that the GPS tracking device is functioning and transmitting correctly"
+ }
+]
