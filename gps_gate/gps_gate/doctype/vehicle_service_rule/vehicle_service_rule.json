@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "creation": "2026-05-07 09:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "service_type",
+  "based_on",
+  "column_break_intervals",
+  "interval_km",
+  "interval_days",
+  "interval_engine_hours",
+  "column_break_warnings",
+  "warning_before_km",
+  "warning_before_days",
+  "warning_before_engine_hours",
+  "is_required",
+  "auto_create_schedule"
+ ],
+ "fields": [
+  {
+   "fieldname": "service_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Service Type",
+   "options": "Vehicle Service Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "based_on",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Based On",
+   "options": "Date\nOdometer\nEngine Hours\nWhichever Comes First",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_intervals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "interval_km",
+   "fieldtype": "Float",
+   "label": "Interval (km)"
+  },
+  {
+   "fieldname": "interval_days",
+   "fieldtype": "Int",
+   "label": "Interval (days)"
+  },
+  {
+   "fieldname": "interval_engine_hours",
+   "fieldtype": "Float",
+   "label": "Interval (engine hours)"
+  },
+  {
+   "fieldname": "column_break_warnings",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warning_before_km",
+   "fieldtype": "Float",
+   "label": "Warn Before (km)"
+  },
+  {
+   "fieldname": "warning_before_days",
+   "fieldtype": "Int",
+   "label": "Warn Before (days)"
+  },
+  {
+   "fieldname": "warning_before_engine_hours",
+   "fieldtype": "Float",
+   "label": "Warn Before (hours)"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_required",
+   "fieldtype": "Check",
+   "label": "Is Required"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_create_schedule",
+   "fieldtype": "Check",
+   "label": "Auto Create Schedule"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-07 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "GPS GATE",
+ "name": "Vehicle Service Rule",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "states": [],
+ "track_changes": 0
+}

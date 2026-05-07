@@ -1,0 +1,228 @@
+{
+ "actions": [],
+ "autoname": "VSS-.YYYY.-.#####",
+ "creation": "2026-05-07 09:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "schedule_section",
+  "vehicle",
+  "vehicle_type",
+  "service_type",
+  "based_on",
+  "column_break_schedule",
+  "status",
+  "priority",
+  "source_rule",
+  "last_service_section",
+  "last_service_date",
+  "last_service_odometer",
+  "last_service_engine_hours",
+  "column_break_last",
+  "due_date",
+  "due_odometer",
+  "due_engine_hours",
+  "current_section",
+  "current_odometer",
+  "current_engine_hours",
+  "warning_section",
+  "warning_before_km",
+  "warning_before_days",
+  "column_break_warning",
+  "warning_before_engine_hours",
+  "raw_section",
+  "raw_rule_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "schedule_section",
+   "fieldtype": "Section Break",
+   "label": "Schedule Information"
+  },
+  {
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Vehicle",
+   "options": "Vehicle",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "vehicle.custom_vehicle_type",
+   "fieldname": "vehicle_type",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_standard_filter": 1,
+   "label": "Vehicle Type",
+   "options": "Vehicle Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "service_type",
+   "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Service Type",
+   "options": "Vehicle Service Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "based_on",
+   "fieldtype": "Select",
+   "label": "Based On",
+   "options": "Date\nOdometer\nEngine Hours\nWhichever Comes First",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_schedule",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "OK",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "\nOK\nDue Soon\nOverdue\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Priority",
+   "options": "\nLow\nMedium\nHigh"
+  },
+  {
+   "fieldname": "source_rule",
+   "fieldtype": "Data",
+   "label": "Source Rule",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_service_section",
+   "fieldtype": "Section Break",
+   "label": "Last Service"
+  },
+  {
+   "fieldname": "last_service_date",
+   "fieldtype": "Date",
+   "label": "Last Service Date"
+  },
+  {
+   "fieldname": "last_service_odometer",
+   "fieldtype": "Float",
+   "label": "Last Odometer (km)"
+  },
+  {
+   "fieldname": "last_service_engine_hours",
+   "fieldtype": "Float",
+   "label": "Last Engine Hours"
+  },
+  {
+   "fieldname": "column_break_last",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "due_odometer",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Due Odometer (km)"
+  },
+  {
+   "fieldname": "due_engine_hours",
+   "fieldtype": "Float",
+   "label": "Due Engine Hours"
+  },
+  {
+   "fieldname": "current_section",
+   "fieldtype": "Section Break",
+   "label": "Current Reading"
+  },
+  {
+   "fieldname": "current_odometer",
+   "fieldtype": "Float",
+   "label": "Current Odometer (km)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_engine_hours",
+   "fieldtype": "Float",
+   "label": "Current Engine Hours",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warning_section",
+   "fieldtype": "Section Break",
+   "label": "Warning Thresholds"
+  },
+  {
+   "fieldname": "warning_before_km",
+   "fieldtype": "Float",
+   "label": "Warn Before (km)"
+  },
+  {
+   "fieldname": "warning_before_days",
+   "fieldtype": "Int",
+   "label": "Warn Before (days)"
+  },
+  {
+   "fieldname": "column_break_warning",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warning_before_engine_hours",
+   "fieldtype": "Float",
+   "label": "Warn Before (hours)"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "raw_section",
+   "fieldtype": "Section Break",
+   "label": "Debug"
+  },
+  {
+   "fieldname": "raw_rule_json",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Rule JSON (debug)"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-07 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "GPS GATE",
+ "name": "Vehicle Service Schedule",
+ "naming_rule": "Expression (old-style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
