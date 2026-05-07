@@ -541,15 +541,89 @@ class GPSGateClient:
     def remove_user_from_group(self, group_id, user_id):
         """
         Remove a user/asset from a group.
-        
+
         Args:
             group_id: GPS Gate group ID
             user_id: GPS Gate user ID to remove
-            
+
         Returns:
             None
         """
         return self._make_request("DELETE", f"groups/{group_id}/users/{user_id}")
+
+    # ========== VEHICLE STATUS & TRACKING API METHODS ==========
+
+    def get_users_status(self):
+        """
+        Get the current status of all vehicles/users in the application.
+
+        Endpoint: GET /applications/{applicationid}/usersstatus
+
+        Returns:
+            list: List of user status dictionaries, each containing:
+                - id: User ID
+                - name: User/vehicle name
+                - position: Current location data (latitude, longitude, altitude)
+                - speed: Current speed
+                - heading: Current heading/direction
+                - deviceTime: Timestamp of the last device update
+                - serverTime: Timestamp when the server received the update
+                - status: Online/offline status
+        """
+        return self._make_request("GET", "usersstatus")
+
+    def get_user_tracks(self, user_id, from_date, to_date, max_count=None):
+        """
+        Get GPS track points for a specific vehicle/user within a date range.
+
+        Endpoint: GET /applications/{applicationid}/users/{userid}/tracks
+
+        Args:
+            user_id: GPS Gate user ID
+            from_date: Start datetime in ISO 8601 format (e.g., '2025-11-20T00:00:00Z')
+            to_date: End datetime in ISO 8601 format (e.g., '2025-11-20T23:59:59Z')
+            max_count: Optional - Maximum number of track points to return
+
+        Returns:
+            list: List of track point dictionaries, each containing:
+                - time: Timestamp of the track point
+                - position: Location data (latitude, longitude, altitude)
+                - speed: Speed at this track point
+                - heading: Direction/heading at this track point
+        """
+        params = [f"from={from_date}", f"to={to_date}"]
+
+        if max_count:
+            params.append(f"maxCount={max_count}")
+
+        query_string = "&".join(params)
+        return self._make_request("GET", f"users/{user_id}/tracks?{query_string}")
+
+    def get_user_trip_infos(self, user_id, from_date, to_date):
+        """
+        Get trip summary information for a specific vehicle/user within a date range.
+
+        Endpoint: GET /applications/{applicationid}/users/{userid}/tripinfos
+
+        Args:
+            user_id: GPS Gate user ID
+            from_date: Start datetime in ISO 8601 format (e.g., '2025-11-20T00:00:00Z')
+            to_date: End datetime in ISO 8601 format (e.g., '2025-11-20T23:59:59Z')
+
+        Returns:
+            list: List of trip summary dictionaries, each containing:
+                - startTime: Trip start timestamp
+                - endTime: Trip end timestamp
+                - startPosition: Starting location (latitude, longitude, altitude)
+                - endPosition: Ending location (latitude, longitude, altitude)
+                - distance: Total trip distance (in meters)
+                - maxSpeed: Maximum speed during the trip
+                - averageSpeed: Average speed during the trip
+                - duration: Total trip duration in seconds
+        """
+        params = [f"from={from_date}", f"to={to_date}"]
+        query_string = "&".join(params)
+        return self._make_request("GET", f"users/{user_id}/tripinfos?{query_string}")
 
 
 def get_gps_gate_client():
