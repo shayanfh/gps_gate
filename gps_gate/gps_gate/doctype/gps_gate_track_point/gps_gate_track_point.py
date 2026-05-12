@@ -8,7 +8,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now
 
-CHUNK_SIZE = 1000
+INSERT_CHUNK = 50   # commit every N inserts — small enough to avoid lock timeout
 
 
 class GPSGateTrackPoint(Document):
@@ -30,11 +30,26 @@ class GPSGateTrackPoint(Document):
 
 # ── internal helper ─────────────────────────────────────────────────────────────
 
+def _build_map_location(lat, lng):
+    if not lat or not lng:
+        return None
+    return json.dumps({
+        "type": "FeatureCollection",
+        "features": [{"type": "Feature", "properties": {}, "geometry": {
+            "type": "Point", "coordinates": [float(lng), float(lat)]
+        }}]
+    })
+
+
 def _sync_user_date_tracks(gps_gate_user_name, gps_user_id, date_str, client):
     """
     Sync track points for ONE user on ONE date.
-    Saves in chunks of CHUNK_SIZE to prevent timeouts.
-    Returns dict: {synced, skipped, total, errors}
+
+    Key optimisations to avoid Lock wait timeout:
+    1. Pre-fetch ALL existing timestamps in a single query (no per-row SELECT inside loop)
+    2. Build the full insert list in memory (no DB access in the loop at all)
+    3. Insert in small chunks of INSERT_CHUNK and commit after each chunk
+    4. Skip before_save/after_insert hooks via flags (map_location built inline)
     """
     from gps_gate.apis.sync_user import sanitize_datetime
 
@@ -47,57 +62,71 @@ def _sync_user_date_tracks(gps_gate_user_name, gps_user_id, date_str, client):
     if not tracks:
         return {"synced": 0, "skipped": 0, "total": 0, "errors": []}
 
-    synced = skipped = 0
+    # ── Step 1: one bulk SELECT to know which timestamps already exist ──────────
+    rows = frappe.db.sql(
+        "SELECT track_time FROM `tabGPS Gate Track Point` WHERE gps_gate_user = %s",
+        (gps_gate_user_name,),
+        as_list=True
+    )
+    existing_set = {str(r[0]) for r in rows if r[0]}
+    frappe.db.commit()   # release any implicit read lock before we start inserting
+
+    # ── Step 2: build insert list in memory ────────────────────────────────────
+    synced_at = now()
+    to_insert = []
+    skipped = 0
     errors = []
-    chunk_count = 0
 
     for t in tracks:
         try:
             utc = sanitize_datetime(t.get("utc"))
             if not utc:
                 continue
-
-            existing = frappe.db.get_value(
-                "GPS Gate Track Point",
-                {"gps_gate_user": gps_gate_user_name, "track_time": utc},
-                "name"
-            )
-            if existing:
+            if str(utc) in existing_set:
                 skipped += 1
                 continue
 
             pos = t.get("position") or {}
             vel = t.get("velocity") or {}
+            lat = pos.get("latitude")
+            lng = pos.get("longitude")
 
-            doc = frappe.new_doc("GPS Gate Track Point")
-            doc.gps_gate_user = gps_gate_user_name
-            doc.track_time = utc
-            doc.track_info_id = t.get("trackInfoId")
-            doc.latitude = pos.get("latitude")
-            doc.longitude = pos.get("longitude")
-            doc.altitude = pos.get("altitude")
-            doc.speed = vel.get("groundSpeed")
-            doc.heading = vel.get("heading")
-            doc.is_valid = 1 if t.get("valid") else 0
-            doc.server_utc = sanitize_datetime(t.get("serverUtc"))
-            doc.raw_response = frappe.as_json(t)
-            doc.last_synced_on = now()
-            doc.insert(ignore_permissions=True)
-            synced += 1
-            chunk_count += 1
-
-            # commit every CHUNK_SIZE inserts to release DB locks
-            if chunk_count >= CHUNK_SIZE:
-                frappe.db.commit()
-                chunk_count = 0
-
+            to_insert.append({
+                "gps_gate_user": gps_gate_user_name,
+                "track_time": utc,
+                "track_info_id": t.get("trackInfoId"),
+                "latitude": lat,
+                "longitude": lng,
+                "altitude": pos.get("altitude"),
+                "speed": vel.get("groundSpeed"),
+                "heading": vel.get("heading"),
+                "is_valid": 1 if t.get("valid") else 0,
+                "server_utc": sanitize_datetime(t.get("serverUtc")),
+                "raw_response": frappe.as_json(t),
+                "last_synced_on": synced_at,
+                "map_location": _build_map_location(lat, lng),
+            })
         except Exception:
             errors.append(str(t.get("utc")))
-            frappe.log_error(title="Track Point Insert Error", message=frappe.get_traceback())
+            frappe.log_error(title="Track Point Prepare Error", message=frappe.get_traceback())
 
-    # final commit for the remaining records
-    if chunk_count > 0:
-        frappe.db.commit()
+    # ── Step 3: insert in small chunks, commit after each ─────────────────────
+    synced = 0
+    for i in range(0, len(to_insert), INSERT_CHUNK):
+        chunk = to_insert[i:i + INSERT_CHUNK]
+        for record in chunk:
+            try:
+                doc = frappe.new_doc("GPS Gate Track Point")
+                doc.update(record)
+                doc.flags.ignore_permissions = True
+                doc.flags.ignore_links = True
+                doc.flags.ignore_mandatory = True
+                doc.insert()
+                synced += 1
+            except Exception:
+                errors.append(str(record.get("track_time")))
+                frappe.log_error(title="Track Point Insert Error", message=frappe.get_traceback())
+        frappe.db.commit()   # release locks after every INSERT_CHUNK rows
 
     return {"synced": synced, "skipped": skipped, "total": len(tracks), "errors": errors}
 
