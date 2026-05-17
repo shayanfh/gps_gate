@@ -68,13 +68,19 @@ def _apply_custom_fields(doc, custom_fields):
         doc.set(fieldname, value)
 
 
+_FIELD_DEFAULTS = {
+    "uom": "Litre",
+}
+
+
 def _fill_mandatory_fields(doc):
     meta = frappe.get_meta("Vehicle")
     for field in meta.fields:
         if not field.reqd or doc.get(field.fieldname):
             continue
-        # Never set Link/Select/Table fields to "X" — invalid values break validators
-        if field.fieldtype not in ("Link", "Select", "Table", "Table MultiSelect"):
+        if field.fieldname in _FIELD_DEFAULTS:
+            doc.set(field.fieldname, _FIELD_DEFAULTS[field.fieldname])
+        elif field.fieldtype not in ("Link", "Select", "Table", "Table MultiSelect"):
             doc.set(field.fieldname, "X")
 
 
