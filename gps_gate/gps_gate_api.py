@@ -681,6 +681,22 @@ class GPSGateClient:
         """
         return self._make_request("GET", f"users/{user_id}/accumulators")
 
+    def get_user_custom_fields(self, user_id):
+        """
+        Get custom field values for a specific user/vehicle.
+
+        Endpoint: GET /applications/{applicationid}/users/{userid}/customfields
+
+        Args:
+            user_id: GPS Gate user ID (int)
+
+        Returns:
+            list: List of custom field dicts, each typically containing:
+                - fieldId / name: Field identifier
+                - value: Field value
+        """
+        return self._make_request("GET", f"users/{user_id}/customfields")
+
 
 def get_gps_gate_client():
     """
