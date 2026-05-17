@@ -191,7 +191,7 @@ def sync_vehicles_from_gps_gate():
         "gps_gate.apis.sync_vehicles._run_sync",
         queue="long",
         timeout=3600,
-        job_name="gps_gate_vehicle_sync",
+        job_id="gps_gate_vehicle_sync",
         deduplicate=True,
     )
     return {"status": "queued"}
