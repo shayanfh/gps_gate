@@ -68,25 +68,18 @@ def _apply_custom_fields(doc, custom_fields):
         doc.set(fieldname, value)
 
 
-_MANDATORY_DEFAULTS = {
-    "fuel_uom": "Litre",
-}
-
 def _fill_mandatory_fields(doc):
+    # Fix fuel_uom unconditionally — Vehicle controller validates it even when not reqd
+    if not doc.fuel_uom or not frappe.db.exists("UOM", doc.fuel_uom):
+        doc.fuel_uom = "Litre"
+
+    # For remaining reqd fields: only set non-Link/Select types to "X"
     meta = frappe.get_meta("Vehicle")
     for field in meta.fields:
-        if not field.reqd:
+        if not field.reqd or doc.get(field.fieldname):
             continue
-        current = doc.get(field.fieldname)
-        # For Link fields, also replace if the current value doesn't exist in the target doctype
-        if field.fieldtype == "Link":
-            if not current or not frappe.db.exists(field.options, current):
-                default = _MANDATORY_DEFAULTS.get(field.fieldname)
-                if default:
-                    doc.set(field.fieldname, default)
-        else:
-            if not current:
-                doc.set(field.fieldname, _MANDATORY_DEFAULTS.get(field.fieldname, "X"))
+        if field.fieldtype not in ("Link", "Select", "Table", "Table MultiSelect"):
+            doc.set(field.fieldname, "X")
 
 
 def _sync_single_vehicle(u, client, log):
