@@ -1,6 +1,7 @@
 [
  {
   "doctype": "Vehicle Type",
+  "name": "Light Vehicle",
   "vehicle_type_name": "Light Vehicle",
   "description": "Small cars, vans, and light pickup vehicles",
   "is_active": 1,
@@ -113,6 +114,7 @@
  },
  {
   "doctype": "Vehicle Type",
+  "name": "Heavy Truck",
   "vehicle_type_name": "Heavy Truck",
   "description": "Heavy trucks, trailers, and long-haul fleet vehicles",
   "is_active": 1,
@@ -238,6 +240,7 @@
  },
  {
   "doctype": "Vehicle Type",
+  "name": "Bus",
   "vehicle_type_name": "Bus",
   "description": "Passenger buses and minibuses",
   "is_active": 1,
@@ -337,6 +340,7 @@
  },
  {
   "doctype": "Vehicle Type",
+  "name": "Forklift",
   "vehicle_type_name": "Forklift",
   "description": "Forklifts and warehouse equipment",
   "is_active": 1,
@@ -423,6 +427,7 @@
  },
  {
   "doctype": "Vehicle Type",
+  "name": "Motorcycle",
   "vehicle_type_name": "Motorcycle",
   "description": "Motorcycles and delivery bikes",
   "is_active": 1,
