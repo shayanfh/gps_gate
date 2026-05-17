@@ -3,23 +3,13 @@ frappe.listview_settings["Vehicle"] = {
 		listview.page.add_inner_button(__("Sync GPS Gate Vehicles"), function () {
 			frappe.call({
 				method: "gps_gate.apis.sync_vehicles.sync_vehicles_from_gps_gate",
-				freeze: true,
-				freeze_message: __("Syncing vehicles from GPS Gate..."),
 				callback: function (r) {
-					if (!r.message) return;
-					let res = r.message;
-					let msg =
-						`<b>${__("Sync Complete")}</b><br>` +
-						`${__("Created")}: ${res.created}<br>` +
-						`${__("Updated")}: ${res.updated}<br>` +
-						`${__("Total with devices")}: ${res.total_with_devices}`;
-
-					if (res.errors && res.errors.length) {
-						msg += `<br><span class="text-danger">${__("Errors")}: ${res.errors.length} (${res.errors.join(", ")})</span>`;
+					if (r.message && r.message.status === "queued") {
+						frappe.show_alert({
+							message: __("Vehicle sync started in background. Check Error Log if issues occur."),
+							indicator: "blue",
+						}, 8);
 					}
-
-					frappe.msgprint({ title: __("GPS Gate Sync"), message: msg, indicator: res.errors.length ? "orange" : "green" });
-					listview.refresh();
 				},
 			});
 		});
