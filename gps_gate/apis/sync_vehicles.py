@@ -69,15 +69,11 @@ def _apply_custom_fields(doc, custom_fields):
 
 
 def _fill_mandatory_fields(doc):
-    # Fix fuel_uom unconditionally — Vehicle controller validates it even when not reqd
-    if not doc.fuel_uom or not frappe.db.exists("UOM", doc.fuel_uom):
-        doc.fuel_uom = "Litre"
-
-    # For remaining reqd fields: only set non-Link/Select types to "X"
     meta = frappe.get_meta("Vehicle")
     for field in meta.fields:
         if not field.reqd or doc.get(field.fieldname):
             continue
+        # Never set Link/Select/Table fields to "X" — invalid values break validators
         if field.fieldtype not in ("Link", "Select", "Table", "Table MultiSelect"):
             doc.set(field.fieldname, "X")
 
