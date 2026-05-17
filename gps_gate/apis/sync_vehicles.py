@@ -68,11 +68,16 @@ def _apply_custom_fields(doc, custom_fields):
         doc.set(fieldname, value)
 
 
+_MANDATORY_DEFAULTS = {
+    "fuel_uom": "Litre",
+}
+
 def _fill_mandatory_fields(doc):
     meta = frappe.get_meta("Vehicle")
     for field in meta.fields:
         if field.reqd and not doc.get(field.fieldname):
-            doc.set(field.fieldname, "X")
+            default = _MANDATORY_DEFAULTS.get(field.fieldname, "X")
+            doc.set(field.fieldname, default)
 
 
 def _sync_single_vehicle(u, client, log):
