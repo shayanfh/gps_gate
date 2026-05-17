@@ -3,6 +3,7 @@ app_name = "gps_gate"
 fixtures = [
     {"dt": "Vehicle Service Type"},
     {"dt": "Vehicle Type"},
+    {"dt": "Workspace", "filters": [["name", "=", "Maintenance"]]},
 ]
 app_title = "GPS GATE"
 app_publisher = "Naqeeb Khan"
