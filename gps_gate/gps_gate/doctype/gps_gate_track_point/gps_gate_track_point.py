@@ -1,6 +1,7 @@
 # Copyright (c) 2026, Naqeeb Khan
 # For license information, please see license.txt
 
+import hashlib
 import json
 from datetime import date as dt, timedelta
 import frappe
@@ -12,6 +13,12 @@ INSERT_CHUNK = 50   # commit every N inserts — small enough to avoid lock time
 
 
 class GPSGateTrackPoint(Document):
+
+    def autoname(self):
+        self.name = make_track_point_name({
+            "gps_gate_user": self.gps_gate_user,
+            "track_time": self.track_time,
+        })
 
     def before_save(self):
         if self.latitude and self.longitude:
@@ -28,7 +35,15 @@ class GPSGateTrackPoint(Document):
             })
 
 
-# ── internal helper ─────────────────────────────────────────────────────────────
+# ── internal helpers ────────────────────────────────────────────────────────────
+
+def make_track_point_name(record):
+    raw = "|".join([
+        str(record.get("gps_gate_user") or ""),
+        str(record.get("track_time") or ""),
+    ])
+    return "GPS-TP-" + hashlib.sha1(raw.encode()).hexdigest()[:24]
+
 
 def _build_map_location(lat, lng):
     if not lat or not lng:
@@ -118,12 +133,17 @@ def _sync_user_date_tracks(gps_gate_user_name, gps_user_id, date_str, client):
             try:
                 doc = frappe.new_doc("GPS Gate Track Point")
                 doc.update(record)
+                doc.name = make_track_point_name(record)  # bypass tabSeries lock
                 doc.flags.ignore_permissions = True
                 doc.flags.ignore_links = True
                 doc.flags.ignore_mandatory = True
                 doc.insert()
                 synced += 1
+            except frappe.DuplicateEntryError:
+                frappe.db.rollback()
+                skipped += 1
             except Exception:
+                frappe.db.rollback()
                 errors.append(str(record.get("track_time")))
                 frappe.log_error(title="Track Point Insert Error", message=frappe.get_traceback())
         frappe.db.commit()   # release locks after every INSERT_CHUNK rows
