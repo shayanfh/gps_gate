@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"BLnkmpqJhy\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vehicle Service Schedule\",\"col\":3}},{\"id\":\"WTCjTbXrce\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vehicle Service Log\",\"col\":3}},{\"id\":\"HPdcUViaTq\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vehicle Service Rule\",\"col\":3}},{\"id\":\"QkfuZPoBsw\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"tRsYGhNkxE\",\"type\":\"header\",\"data\":{\"text\":\"<h3>Masters</h3>\",\"col\":12}},{\"id\":\"aNbVcDeFgH\",\"type\":\"card\",\"data\":{\"card_name\":\"Vehicle Masters\",\"col\":4}},{\"id\":\"iJkLmNoPqR\",\"type\":\"card\",\"data\":{\"card_name\":\"GPS Gate\",\"col\":4}}]",
+ "content": "[{\"id\":\"BLnkmpqJhy\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vehicle Service Schedule\",\"col\":3}},{\"id\":\"WTCjTbXrce\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vehicle Service Log\",\"col\":3}},{\"id\":\"QkfuZPoBsw\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"tRsYGhNkxE\",\"type\":\"header\",\"data\":{\"text\":\"<h3>Masters</h3>\",\"col\":12}},{\"id\":\"aNbVcDeFgH\",\"type\":\"card\",\"data\":{\"card_name\":\"Vehicle Masters\",\"col\":4}},{\"id\":\"iJkLmNoPqR\",\"type\":\"card\",\"data\":{\"card_name\":\"GPS Gate\",\"col\":4}}]",
  "creation": "2026-05-17 00:00:00.000000",
  "custom_blocks": [],
  "developer_mode_only": 0,
@@ -35,18 +35,6 @@
    "link_type": "DocType",
    "name": "maint-link-02",
    "onboard": 1,
-   "type": "Link"
-  },
-  {
-   "doctype": "Workspace Link",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Vehicle Service Rule",
-   "link_count": 0,
-   "link_to": "Vehicle Service Rule",
-   "link_type": "DocType",
-   "name": "maint-link-03",
-   "onboard": 0,
    "type": "Link"
   },
   {
@@ -96,18 +84,6 @@
    "name": "maint-card-02",
    "onboard": 0,
    "type": "Card Break"
-  },
-  {
-   "doctype": "Workspace Link",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "GPS Gate Device",
-   "link_count": 0,
-   "link_to": "GPS Gate Device",
-   "link_type": "DocType",
-   "name": "maint-link-06",
-   "onboard": 0,
-   "type": "Link"
   },
   {
    "doctype": "Workspace Link",
@@ -216,18 +192,6 @@
    "name": "maint-link-15",
    "onboard": 0,
    "type": "Link"
-  },
-  {
-   "doctype": "Workspace Link",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Event Arguments",
-   "link_count": 0,
-   "link_to": "Event Arguments",
-   "link_type": "DocType",
-   "name": "maint-link-16",
-   "onboard": 0,
-   "type": "Link"
   }
  ],
  "modified": "2026-05-17 00:00:00.000000",
@@ -256,16 +220,6 @@
    "label": "Vehicle Service Log",
    "link_to": "Vehicle Service Log",
    "name": "maint-sc-02",
-   "stats_filter": null,
-   "type": "DocType"
-  },
-  {
-   "color": "Orange",
-   "doctype": "Workspace Shortcut",
-   "format": null,
-   "label": "Vehicle Service Rule",
-   "link_to": "Vehicle Service Rule",
-   "name": "maint-sc-03",
    "stats_filter": null,
    "type": "DocType"
   }
