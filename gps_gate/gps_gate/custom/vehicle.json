@@ -529,22 +529,7 @@
    "owner": "Administrator",
    "permlevel": 0
   },
-  {
-   "creation": "2026-05-17 00:00:00",
-   "docstatus": 0,
-   "dt": "Vehicle",
-   "fieldname": "custom_vehicle_model",
-   "fieldtype": "Data",
-   "idx": 0,
-   "insert_after": "custom_gps_info_section",
-   "is_system_generated": 0,
-   "label": "Vehicle Model",
-   "modified": "2026-05-17 00:00:00",
-   "modified_by": "Administrator",
-   "name": "Vehicle-custom_vehicle_model",
-   "owner": "Administrator",
-   "permlevel": 0
-  },
+
   {
    "creation": "2026-05-17 00:00:00",
    "docstatus": 0,

@@ -7,7 +7,7 @@ from gps_gate.gps_gate_api import GPSGateClient, GPSGateAPIError
 
 
 _CUSTOM_FIELD_MAP = {
-    "Vehicle Model":         "custom_vehicle_model",
+    "Vehicle Model":         "model",
     "Vehicle Brand":         "custom_vehicle_brand",
     "Chassis":               "custom_chassis",
     "Installation Location": "custom_installation_location",
