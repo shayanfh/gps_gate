@@ -75,9 +75,18 @@ _MANDATORY_DEFAULTS = {
 def _fill_mandatory_fields(doc):
     meta = frappe.get_meta("Vehicle")
     for field in meta.fields:
-        if field.reqd and not doc.get(field.fieldname):
-            default = _MANDATORY_DEFAULTS.get(field.fieldname, "X")
-            doc.set(field.fieldname, default)
+        if not field.reqd:
+            continue
+        current = doc.get(field.fieldname)
+        # For Link fields, also replace if the current value doesn't exist in the target doctype
+        if field.fieldtype == "Link":
+            if not current or not frappe.db.exists(field.options, current):
+                default = _MANDATORY_DEFAULTS.get(field.fieldname)
+                if default:
+                    doc.set(field.fieldname, default)
+        else:
+            if not current:
+                doc.set(field.fieldname, _MANDATORY_DEFAULTS.get(field.fieldname, "X"))
 
 
 def _sync_single_vehicle(u, client, log):
