@@ -664,6 +664,23 @@ class GPSGateClient:
         """
         return self._make_request("GET", f"users/{user_id}/tripinfos?Date={date}")
 
+    def get_user_accumulators(self, user_id):
+        """
+        Get accumulator values for a specific user/vehicle.
+
+        Endpoint: GET /applications/{applicationid}/users/{userid}/accumulators
+
+        Args:
+            user_id: GPS Gate user ID
+
+        Returns:
+            list: List of accumulator dicts, each typically containing:
+                - name: Accumulator name (e.g. 'odometer', 'engineHours')
+                - value: Current accumulator value
+                - unit: Unit of measurement
+        """
+        return self._make_request("GET", f"users/{user_id}/accumulators")
+
 
 def get_gps_gate_client():
     """
