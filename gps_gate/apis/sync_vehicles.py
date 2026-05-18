@@ -111,13 +111,17 @@ def _apply_accumulators(doc, accumulators, log):
     GPSGate value looks like meters, so we convert to KM.
     Since Vehicle already has odometer field, we set doc.odometer.
     """
+    applied = False
     for acc in accumulators or []:
         if acc.get("accumulatorTypeId") == 1:
             raw = acc.get("value") or 0
-            doc.odometer = round(raw / 1000, 2)
-
-            log.info(f"  odometer: {doc.odometer} km")
+            od = round(raw / 1000, 2)
+            doc.odometer = od
+            log.info(f"  odometer (from accumulator): {od} km (raw={raw})")
+            applied = True
             break
+    if not applied:
+        log.info("No odometer accumulator found; using existing odometer value.")
 
 
 def _apply_custom_fields(doc, custom_fields):
@@ -243,7 +247,7 @@ def _sync_single_vehicle(u, client, log):
         if _is_sync_cancelled():
             return "cancelled"
 
-        _apply_accumulators(doc, accumulators, log)
+        _apply_accumulators(doc, accumulators, log)\n\n        # DEBUG: log final odometer for troubleshooting\n        try:\n            _ = doc.odometer\n            log.info(f"DEBUG odometer after accumulators: {doc.odometer}")\n        except Exception:\n            log.info("DEBUG odometer not set yet")
 
     except Exception:
         tb = frappe.get_traceback()
