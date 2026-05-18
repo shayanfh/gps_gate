@@ -110,14 +110,14 @@ def _apply_accumulators(doc, accumulators, log):
     GPSGate accumulatorTypeId = 1 is odometer.
 
     GPSGate value looks like meters, so we convert to KM.
-    Since Vehicle already has odometer field, we set doc.odometer.
+    Since Vehicle already has odometer field, we set doc.last_odometer.
     """
     applied = False
     for acc in accumulators or []:
         if acc.get("accumulatorTypeId") == 1:
             raw = acc.get("value") or 0
             od = round(raw / 1000, 2)
-            doc.odometer = od
+            doc.last_odometer = od
             log.info(f"  odometer (from accumulator): {od} km (raw={raw})")
             applied = True
             break

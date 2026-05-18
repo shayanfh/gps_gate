@@ -21,7 +21,7 @@ def _get_vehicle_odometer(vehicle):
     Vehicle standard field is `odometer`.
     Fallback to custom_current_odometer only for old data compatibility.
     """
-    return vehicle.get("odometer") or vehicle.get("custom_current_odometer") or 0
+    return vehicle.get("last_odometer") or vehicle.get("custom_current_odometer") or 0
 
 
 def _get_vehicle_engine_hours(vehicle):
