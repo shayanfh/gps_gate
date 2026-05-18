@@ -6,6 +6,8 @@ from datetime import datetime
 from gps_gate.gps_gate_api import GPSGateClient, GPSGateAPIError
 
 
+_SYNC_CANCEL_KEY = "gps_gate_vehicle_sync_cancel"
+
 _CUSTOM_FIELD_MAP = {
     "Vehicle Model":         "model",
     "Vehicle Brand":         "custom_vehicle_brand",
@@ -21,6 +23,16 @@ _CUSTOM_FIELD_MAP = {
 
 _DATE_FIELDS  = {"custom_installation_date", "custom_last_maintenance_date"}
 _FLOAT_FIELDS = {"custom_last_maintenance_km"}
+
+
+def _is_sync_cancelled():
+    return frappe.cache().get_value(_SYNC_CANCEL_KEY) == "1"
+
+
+def _emit(user, current, total, label="", status="running", **extra):
+    msg = {"status": status, "current": current, "total": total, "label": label}
+    msg.update(extra)
+    frappe.publish_realtime("vehicle_sync_progress", msg, user=user)
 
 
 def _get_device_type_id():
@@ -159,8 +171,11 @@ def _sync_single_vehicle(u, client, log):
     return action
 
 
-def _run_sync():
+def _run_sync(triggered_by=None):
     """Background job — called by frappe.enqueue."""
+    frappe.cache().delete_value(_SYNC_CANCEL_KEY)
+    pub = lambda **kw: _emit(triggered_by, **kw)
+
     log = frappe.logger("vehicle_sync", allow_site=True, file_count=5)
     log.info("===== Vehicle sync started =====")
 
@@ -169,6 +184,7 @@ def _run_sync():
     except GPSGateAPIError as e:
         log.error(f"GPSGateClient init failed: {e.message}")
         frappe.log_error(title="Vehicle Sync - Client Error", message=str(e.message))
+        pub(current=0, total=0, status="error", label=str(e.message))
         return
 
     log.info("Fetching all users from GPS Gate...")
@@ -178,20 +194,32 @@ def _run_sync():
         tb = frappe.get_traceback()
         log.error(f"get_users failed:\n{tb}")
         frappe.log_error(title="Vehicle Sync - get_users Error", message=tb)
+        pub(current=0, total=0, status="error", label="Failed to fetch users")
         return
 
     log.info(f"Total users fetched: {len(users)}")
 
     device_type_id = _get_device_type_id()
     device_users = [u for u in users if u.get("userTemplateID") == device_type_id]
-    log.info(f"Device users to sync: {len(device_users)}")
+    total = len(device_users)
+    log.info(f"Device users to sync: {total}")
+    pub(current=0, total=total, label="Starting…")
 
     created = updated = 0
     errors  = []
 
     for i, u in enumerate(device_users, 1):
+        if _is_sync_cancelled():
+            log.info("Sync cancelled by user.")
+            pub(current=i - 1, total=total, status="cancelled",
+                created=created, updated=updated, errors=len(errors))
+            return
+
+        label = u.get("username") or str(u.get("id"))
+        pub(current=i, total=total, label=label)
+
         gps_user_id = u.get("id")
-        log.info(f"[{i}/{len(device_users)}] user_id={gps_user_id}")
+        log.info(f"[{i}/{total}] user_id={gps_user_id}")
         try:
             action = _sync_single_vehicle(u, client, log)
             if action == "created":
@@ -200,11 +228,12 @@ def _run_sync():
                 updated += 1
         except Exception:
             tb = frappe.get_traceback()
-            label = u.get("username") or str(gps_user_id)
             errors.append(label)
             log.error(f"  FAILED {label}:\n{tb}")
             frappe.log_error(title=f"Vehicle Sync Error - user {gps_user_id}", message=tb)
 
+    pub(current=total, total=total, status="done",
+        created=created, updated=updated, errors=len(errors))
     log.info(f"===== Done: created={created}, updated={updated}, errors={len(errors)} =====")
 
 
@@ -217,8 +246,15 @@ def sync_vehicles_from_gps_gate():
         timeout=3600,
         job_id="gps_gate_vehicle_sync",
         deduplicate=True,
+        triggered_by=frappe.session.user,
     )
     return {"status": "queued"}
+
+
+@frappe.whitelist()
+def cancel_vehicle_sync():
+    frappe.cache().set_value(_SYNC_CANCEL_KEY, "1", expires_in_sec=600)
+    return {"status": "cancel_requested"}
 
 
 @frappe.whitelist()
