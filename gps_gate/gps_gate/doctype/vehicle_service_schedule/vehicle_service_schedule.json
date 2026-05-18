@@ -70,6 +70,13 @@
    "reqd": 1
   },
   {
+  "fieldname": "last_notification_sent_at",
+  "fieldtype": "Datetime",
+  "hidden": 1,
+  "label": "Last Notification Sent At",
+  "read_only": 1
+  },
+  {
    "fieldname": "based_on",
    "fieldtype": "Select",
    "label": "Based On",
