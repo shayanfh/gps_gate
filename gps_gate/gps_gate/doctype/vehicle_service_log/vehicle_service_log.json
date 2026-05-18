@@ -62,7 +62,8 @@
    "fieldname": "service_odometer",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Odometer at Service (km)"
+   "label": "Odometer at Service (km)",
+   "reqd": 1
   },
   {
    "fieldname": "service_engine_hours",
