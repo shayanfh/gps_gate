@@ -55,7 +55,7 @@ def generate_schedules_for_vehicle(vehicle_name):
             last_engine_hours = last_log.service_engine_hours or 0
         else:
             last_date = vehicle.get("purchase_date") or getdate(vehicle.creation)
-            last_odometer = vehicle.get("custom_current_odometer") or 0
+            last_odometer = vehicle.get("odometer") or 0
             last_engine_hours = vehicle.get("custom_current_engine_hours") or 0
 
         due_date = add_days(last_date, rule.interval_days) if rule.interval_days else None
@@ -75,7 +75,7 @@ def generate_schedules_for_vehicle(vehicle_name):
         schedule.due_date = due_date
         schedule.due_odometer = due_odometer
         schedule.due_engine_hours = due_engine_hours
-        schedule.current_odometer = vehicle.get("custom_current_odometer") or 0
+        schedule.current_odometer = vehicle.get("odometer") or 0
         schedule.current_engine_hours = vehicle.get("custom_current_engine_hours") or 0
         schedule.warning_before_km = rule.warning_before_km
         schedule.warning_before_days = rule.warning_before_days
@@ -98,7 +98,7 @@ def evaluate_vehicle_maintenance(vehicle_name):
     )
 
     vehicle = frappe.get_doc("Vehicle", vehicle_name)
-    current_odometer = vehicle.get("custom_current_odometer") or 0
+    current_odometer = vehicle.get("odometer") or 0
     current_engine_hours = vehicle.get("custom_current_engine_hours") or 0
 
     schedules = frappe.get_all(
