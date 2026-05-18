@@ -247,8 +247,8 @@ def _sync_single_vehicle(u, client, log):
         if _is_sync_cancelled():
             return "cancelled"
 
-        _apply_accumulators(doc, accumulators, log)\n\n        # DEBUG: log final odometer for troubleshooting\n        try:\n            _ = doc.odometer\n            log.info(f"DEBUG odometer after accumulators: {doc.odometer}")\n        except Exception:\n            log.info("DEBUG odometer not set yet")
-
+        _apply_accumulators(doc, accumulators, log)
+       
     except Exception:
         tb = frappe.get_traceback()
         log.warning(f"  accumulators failed: {tb}")
@@ -305,6 +305,7 @@ def _run_sync(triggered_by=None):
         _emit(triggered_by, **kw)
 
     log = frappe.logger("vehicle_sync", allow_site=True, file_count=5)
+    log.setLevel(logging.DEBUG)
     log.info("===== Vehicle sync started =====")
 
     try:
