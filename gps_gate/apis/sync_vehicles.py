@@ -72,13 +72,28 @@ _FIELD_DEFAULTS = {
     "uom": "Litre",
 }
 
+_default_vehicle_type_cache = None
+
+
+def _get_default_vehicle_type():
+    global _default_vehicle_type_cache
+    if not _default_vehicle_type_cache:
+        _default_vehicle_type_cache = frappe.db.get_value(
+            "Vehicle Type", {"is_active": 1}, "name", order_by="creation asc"
+        )
+    return _default_vehicle_type_cache
+
 
 def _fill_mandatory_fields(doc):
     meta = frappe.get_meta("Vehicle")
     for field in meta.fields:
         if not field.reqd or doc.get(field.fieldname):
             continue
-        if field.fieldname in _FIELD_DEFAULTS:
+        if field.fieldname == "custom_vehicle_type":
+            default_type = _get_default_vehicle_type()
+            if default_type:
+                doc.set(field.fieldname, default_type)
+        elif field.fieldname in _FIELD_DEFAULTS:
             doc.set(field.fieldname, _FIELD_DEFAULTS[field.fieldname])
         elif field.fieldtype not in ("Link", "Select", "Table", "Table MultiSelect"):
             doc.set(field.fieldname, "X")
@@ -204,3 +219,23 @@ def sync_vehicles_from_gps_gate():
         deduplicate=True,
     )
     return {"status": "queued"}
+
+
+@frappe.whitelist()
+def bulk_set_vehicle_type(vehicles, vehicle_type):
+    """Set custom_vehicle_type for a list of Vehicle names."""
+    import json
+
+    frappe.has_permission("Vehicle", "write", throw=True)
+
+    if isinstance(vehicles, str):
+        vehicles = json.loads(vehicles)
+
+    if not frappe.db.exists("Vehicle Type", vehicle_type):
+        frappe.throw(_("Vehicle Type '{0}' does not exist.").format(vehicle_type))
+
+    for name in vehicles:
+        frappe.db.set_value("Vehicle", name, "custom_vehicle_type", vehicle_type)
+
+    frappe.db.commit()
+    return {"updated": len(vehicles)}
