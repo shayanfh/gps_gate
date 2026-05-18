@@ -1,10 +1,14 @@
 frappe.listview_settings["Vehicle"] = {
+	add_fields: ["custom_vehicle_type"],
+
 	get_indicator: function (doc) {
 		if (doc.custom_vehicle_type) {
-			return [__("Active"), "green", "custom_vehicle_type,is,set"];
+			return [doc.custom_vehicle_type, "green", "custom_vehicle_type,=," + doc.custom_vehicle_type];
 		}
-		return [__("Incomplete"), "orange", "custom_vehicle_type,is,not set"];
+
+		return [__("No Vehicle Type"), "orange", "custom_vehicle_type,is,not set"];
 	},
+
 
 	onload: function (listview) {
 		let _syncDialog = null;
