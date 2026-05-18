@@ -2,6 +2,7 @@ import frappe
 from frappe.utils import now
 from frappe import _
 from datetime import datetime
+from frappe.utils import cint
 
 from gps_gate.gps_gate_api import GPSGateClient, GPSGateAPIError
 
@@ -26,7 +27,7 @@ _FLOAT_FIELDS = {"custom_last_maintenance_km"}
 
 
 def _is_sync_cancelled():
-    return frappe.cache().get_value(_SYNC_CANCEL_KEY) == "1"
+    return cint(frappe.cache().get_value(_SYNC_CANCEL_KEY)) == 1
 
 
 def _emit(user, current, total, label="", status="running", **extra):
@@ -254,6 +255,16 @@ def sync_vehicles_from_gps_gate():
 @frappe.whitelist()
 def cancel_vehicle_sync():
     frappe.cache().set_value(_SYNC_CANCEL_KEY, "1", expires_in_sec=600)
+
+    frappe.publish_realtime(
+        "vehicle_sync_progress",
+        {
+            "status": "cancelling",
+            "label": "Cancel requested..."
+        },
+        user=frappe.session.user
+    )
+
     return {"status": "cancel_requested"}
 
 
