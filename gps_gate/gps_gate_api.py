@@ -697,6 +697,23 @@ class GPSGateClient:
         """
         return self._make_request("GET", f"users/{user_id}/customfields")
 
+    def update_user_custom_field(self, user_id, custom_field_name, value):
+        """
+        Update a custom field value for a specific user/vehicle.
+
+        Endpoint: PUT /applications/{applicationid}/users/{userid}/customfields/{customfieldname}
+
+        Args:
+            user_id: GPS Gate user ID (int)
+            custom_field_name: CustomFieldName of the field to update (string)
+            value: New value to set for the custom field (string)
+
+        Returns:
+            dict: Updated custom field data
+        """
+        payload = {"name": custom_field_name, "value": str(value)}
+        return self._make_request("PUT", f"users/{user_id}/customfields/{custom_field_name}", payload)
+
 
 def get_gps_gate_client():
     """
