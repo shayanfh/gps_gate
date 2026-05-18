@@ -154,13 +154,18 @@ doctype_list_js = {"Vehicle": "public/js/vehicle_list.js"}
 # }
 
 scheduler_events = {
+    "hourly_long": [
+        "gps_gate.apis.maintenance_jobs.hourly_vehicle_maintenance_job",
+    ],
+
     "cron": {
-        "1 0 * * *": [  #  12:01 AM
+        "1 0 * * *": [
+            # 12:01 AM
             "gps_gate.apis.sync_events.sync_gps_gate_event_rules",
             "gps_gate.apis.sync_events.scheduled_sync_gps_gate_events",
-            "gps_gate.apis.sync_user.sync_gps_gate_users"
+            "gps_gate.apis.sync_user.sync_gps_gate_users",
         ]
-    }
+    },
 }
 # Scheduled Tasks
 # ---------------
