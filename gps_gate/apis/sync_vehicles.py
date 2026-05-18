@@ -354,6 +354,7 @@ def _run_sync(triggered_by=None):
             updated=0,
             errors=0,
         )
+        frappe.cache().delete_value(_SYNC_CANCEL_KEY)
         return
 
     log.info(f"Total users fetched: {len(users)}")
