@@ -96,19 +96,6 @@
     "warning_before_engine_hours": 0,
     "is_required": 1,
     "auto_create_schedule": 1
-   },
-   {
-    "doctype": "Vehicle Service Rule",
-    "service_type": "Insurance Renewal",
-    "based_on": "Date",
-    "interval_km": 0,
-    "interval_days": 365,
-    "interval_engine_hours": 0,
-    "warning_before_km": 0,
-    "warning_before_days": 30,
-    "warning_before_engine_hours": 0,
-    "is_required": 1,
-    "auto_create_schedule": 1
    }
   ]
  },
@@ -222,19 +209,6 @@
     "warning_before_engine_hours": 0,
     "is_required": 1,
     "auto_create_schedule": 1
-   },
-   {
-    "doctype": "Vehicle Service Rule",
-    "service_type": "Insurance Renewal",
-    "based_on": "Date",
-    "interval_km": 0,
-    "interval_days": 365,
-    "interval_engine_hours": 0,
-    "warning_before_km": 0,
-    "warning_before_days": 30,
-    "warning_before_engine_hours": 0,
-    "is_required": 1,
-    "auto_create_schedule": 1
    }
   ]
  },
@@ -316,19 +290,6 @@
     "based_on": "Date",
     "interval_km": 0,
     "interval_days": 180,
-    "interval_engine_hours": 0,
-    "warning_before_km": 0,
-    "warning_before_days": 30,
-    "warning_before_engine_hours": 0,
-    "is_required": 1,
-    "auto_create_schedule": 1
-   },
-   {
-    "doctype": "Vehicle Service Rule",
-    "service_type": "Insurance Renewal",
-    "based_on": "Date",
-    "interval_km": 0,
-    "interval_days": 365,
     "interval_engine_hours": 0,
     "warning_before_km": 0,
     "warning_before_days": 30,
@@ -474,19 +435,6 @@
    {
     "doctype": "Vehicle Service Rule",
     "service_type": "Vehicle Inspection",
-    "based_on": "Date",
-    "interval_km": 0,
-    "interval_days": 365,
-    "interval_engine_hours": 0,
-    "warning_before_km": 0,
-    "warning_before_days": 30,
-    "warning_before_engine_hours": 0,
-    "is_required": 1,
-    "auto_create_schedule": 1
-   },
-   {
-    "doctype": "Vehicle Service Rule",
-    "service_type": "Insurance Renewal",
     "based_on": "Date",
     "interval_km": 0,
     "interval_days": 365,
