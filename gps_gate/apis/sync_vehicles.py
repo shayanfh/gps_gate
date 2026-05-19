@@ -201,9 +201,9 @@ def _sync_single_vehicle(u, client, log):
         return "cancelled"
 
     gps_user_id = u.get("id")
-    username = u.get("username") or str(gps_user_id)
+    name = u.get("name") or str(gps_user_id)
 
-    log.info(f"--- syncing user_id={gps_user_id} username={username}")
+    log.info(f"--- syncing user_id={gps_user_id} name={name}")
 
     devices = u.get("devices") or []
     first_device_id = str(devices[0].get("id")) if devices else ""
@@ -223,7 +223,7 @@ def _sync_single_vehicle(u, client, log):
     else:
         existing = frappe.db.get_value(
             "Vehicle",
-            {"license_plate": username},
+            {"license_plate": name},
             "name",
         )
 
@@ -232,7 +232,7 @@ def _sync_single_vehicle(u, client, log):
             action = "updated"
         else:
             doc = frappe.new_doc("Vehicle")
-            doc.license_plate = username
+            doc.license_plate = name
             action = "created"
 
     if _is_sync_cancelled():
@@ -419,7 +419,7 @@ def _run_sync(triggered_by=None):
             )
             return
 
-        label = u.get("username") or str(u.get("id"))
+        label = u.get("name") or str(u.get("description"))
 
         pub(
             current=i,
