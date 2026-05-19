@@ -1,7 +1,10 @@
 import frappe
 import requests
 from frappe import _
+import logging 
 
+log = frappe.logger("company_log", allow_site=True, file_count=5)
+log.setLevel(logging.DEBUG)
 
 @frappe.whitelist()
 def test_gps_gate_token(company: str):
@@ -23,7 +26,8 @@ def test_gps_gate_token(company: str):
 	base_url = (company_doc.get("custom_base_url") or "").strip().rstrip("/")
 	app_id = (company_doc.get("custom_app_id") or "").strip()
 
-	token = (company_doc.get("custom_token") or "").strip()
+	token = (company_doc.get_password("custom_token") or "").strip()
+	log.debug(f"token is : {token}")
 
 	if not base_url:
 		frappe.throw(_("GPS Gate Base URL is missing."))
