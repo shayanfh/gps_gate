@@ -7,6 +7,9 @@ from frappe.model.document import Document
 
 
 class VehicleServiceLog(Document):
+    def after_save(self):
+        _sync_to_gps_gate(self)
+
     def on_submit(self):
         # 1. Mark referenced schedule as Completed
         if self.schedule_reference:
@@ -28,6 +31,26 @@ class VehicleServiceLog(Document):
             schedule.status = _evaluate_status(schedule)
             schedule.save(ignore_permissions=True)
         frappe.db.commit()
+
+
+def _sync_to_gps_gate(log_doc):
+    """Push last maintenance date and odometer to GPS Gate custom fields."""
+    try:
+        gps_gate_user_id = frappe.db.get_value("Vehicle", log_doc.vehicle, "custom_gpsgate_user_id")
+        if not gps_gate_user_id:
+            return
+
+        from gps_gate.gps_gate_api import GPSGateClient
+        client = GPSGateClient()
+
+        if log_doc.service_date:
+            client.update_user_custom_field(gps_gate_user_id, "Last Maintenance Date", str(log_doc.service_date))
+
+        if log_doc.service_odometer is not None:
+            client.update_user_custom_field(gps_gate_user_id, "Last Maintenance KM", log_doc.service_odometer)
+
+    except Exception as e:
+        frappe.log_error(title="GPS Gate Sync Error (Service Log)", message=str(e))
 
 
 def _create_next_schedule(log_doc):
