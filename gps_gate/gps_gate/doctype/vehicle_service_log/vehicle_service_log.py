@@ -11,7 +11,7 @@ log.setLevel(logging.DEBUG)
 logger = log
 
 class VehicleServiceLog(Document):
-    def after_save(self):
+    def on_update(self):
         _sync_to_gps_gate(self)
 
     def on_submit(self):
