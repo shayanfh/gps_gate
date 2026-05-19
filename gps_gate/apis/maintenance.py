@@ -32,6 +32,69 @@ def _get_vehicle_engine_hours(vehicle):
     return vehicle.get("custom_current_engine_hours") or 0
 
 
+def _fetch_gpsgate_initial_maintenance(vehicle):
+    """
+    Read GPS Gate last-maintenance snapshot from the Vehicle record.
+    These fields are synced from GPS Gate custom fields during vehicle sync.
+
+    Returns:
+        (date, km) tuple if data exists, otherwise (None, None)
+    """
+    gpsgate_date = vehicle.get("custom_last_maintenance_date")
+    gpsgate_km = vehicle.get("custom_last_maintenance_km") or 0
+    if gpsgate_date:
+        return gpsgate_date, gpsgate_km
+    return None, None
+
+
+def _create_initial_service_logs(vehicle, vehicle_type, init_date, init_km):
+    """
+    For each active rule in the vehicle type, create a submitted initial
+    Vehicle Service Log seeded from GPS Gate last-maintenance data.
+
+    Called once when a vehicle has no service logs at all but GPS Gate
+    provides a last-maintenance date and KM as a starting point.
+
+    Returns:
+        int: count of logs created
+    """
+    created = 0
+
+    for rule in vehicle_type.service_rules:
+        if not rule.auto_create_schedule:
+            continue
+
+        already_exists = frappe.db.exists(
+            "Vehicle Service Log",
+            {
+                "vehicle": vehicle.name,
+                "service_type": rule.service_type,
+                "docstatus": 1,
+            },
+        )
+        if already_exists:
+            continue
+
+        try:
+            log = frappe.new_doc("Vehicle Service Log")
+            log.vehicle = vehicle.name
+            log.service_type = rule.service_type
+            log.service_date = init_date
+            log.service_odometer = init_km
+            log.service_engine_hours = 0
+            log.remarks = "Initial log seeded from GPS Gate last maintenance data."
+            log.insert(ignore_permissions=True)
+            log.submit()
+            created += 1
+        except Exception:
+            frappe.log_error(
+                title="GPS Gate Initial Service Log Error",
+                message=frappe.get_traceback(),
+            )
+
+    return created
+
+
 def generate_schedules_for_vehicle(vehicle_name):
     """
     Generate Vehicle Service Schedules for one vehicle based on its Vehicle Type rules.
@@ -52,6 +115,17 @@ def generate_schedules_for_vehicle(vehicle_name):
 
     if not vehicle_type.is_active:
         return 0
+
+    # If this vehicle has no service logs at all, try to seed initial logs
+    # from the GPS Gate last-maintenance snapshot (synced onto the Vehicle record).
+    has_any_log = frappe.db.exists(
+        "Vehicle Service Log",
+        {"vehicle": vehicle_name, "docstatus": 1},
+    )
+    if not has_any_log:
+        init_date, init_km = _fetch_gpsgate_initial_maintenance(vehicle)
+        if init_date:
+            _create_initial_service_logs(vehicle, vehicle_type, init_date, init_km)
 
     created = 0
 
