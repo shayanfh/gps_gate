@@ -6,17 +6,9 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-_log_file_handler = logging.FileHandler(
-    "/home/frappe/frappe-bench/logs/gps_gate_sync.log", encoding="utf-8"
-)
-_log_file_handler.setFormatter(
-    logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-)
-logger.addHandler(_log_file_handler)
-
+log = frappe.logger("vehicle_service_log", allow_site=True, file_count=5)
+log.setLevel(logging.DEBUG)
+logger = log
 
 class VehicleServiceLog(Document):
     def after_save(self):
