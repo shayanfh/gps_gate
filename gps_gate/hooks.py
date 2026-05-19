@@ -35,6 +35,7 @@ app_license = "mit"
 # app_include_js = "/assets/gps_gate/js/gps_gate.js"
 
 doctype_list_js = {"Vehicle": "public/js/vehicle_list.js"}
+doctype_js = {"Company": "public/js/company.js"}
 
 # include js, css files in header of web template
 # web_include_css = "/assets/gps_gate/css/gps_gate.css"
