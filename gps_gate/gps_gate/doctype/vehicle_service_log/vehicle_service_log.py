@@ -1,9 +1,21 @@
 # Copyright (c) 2026, Naqeeb Khan
 # For license information, please see license.txt
 
+import logging
 import frappe
 from frappe import _
 from frappe.model.document import Document
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+_log_file_handler = logging.FileHandler(
+    "/home/frappe/frappe-bench/logs/gps_gate_sync.log", encoding="utf-8"
+)
+_log_file_handler.setFormatter(
+    logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+)
+logger.addHandler(_log_file_handler)
 
 
 class VehicleServiceLog(Document):
@@ -35,22 +47,38 @@ class VehicleServiceLog(Document):
 
 def _sync_to_gps_gate(log_doc):
     """Push last maintenance date and odometer to GPS Gate custom fields."""
+    import traceback
+
     try:
         gps_gate_user_id = frappe.db.get_value("Vehicle", log_doc.vehicle, "custom_gpsgate_user_id")
+
+        logger.info(
+            f"[GPS Gate Sync] Vehicle={log_doc.vehicle} | GPS Gate User ID={gps_gate_user_id} | "
+            f"service_date={log_doc.service_date} | service_odometer={log_doc.service_odometer}"
+        )
+
         if not gps_gate_user_id:
+            logger.warning(f"[GPS Gate Sync] Skipped — no GPS Gate User ID on vehicle {log_doc.vehicle}")
             return
 
         from gps_gate.gps_gate_api import GPSGateClient
         client = GPSGateClient()
 
         if log_doc.service_date:
+            logger.info(f"[GPS Gate Sync] Updating 'Last Maintenance Date' → {log_doc.service_date}")
             client.update_user_custom_field(gps_gate_user_id, "Last Maintenance Date", str(log_doc.service_date))
+            logger.info("[GPS Gate Sync] 'Last Maintenance Date' updated successfully")
 
         if log_doc.service_odometer is not None:
+            logger.info(f"[GPS Gate Sync] Updating 'Last Maintenance KM' → {log_doc.service_odometer}")
             client.update_user_custom_field(gps_gate_user_id, "Last Maintenance KM", log_doc.service_odometer)
+            logger.info("[GPS Gate Sync] 'Last Maintenance KM' updated successfully")
 
     except Exception as e:
-        frappe.log_error(title="GPS Gate Sync Error (Service Log)", message=str(e))
+        frappe.log_error(
+            title="GPS Gate Sync Error (Service Log)",
+            message=f"{str(e)}\n\n{traceback.format_exc()}"
+        )
 
 
 def _create_next_schedule(log_doc):
