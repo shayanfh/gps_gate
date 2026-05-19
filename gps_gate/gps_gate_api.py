@@ -63,7 +63,7 @@ class GPSGateClient:
 
         self.base_url = (self.settings.custom_base_url or "").rstrip("/")
         self.app_id = self.settings.custom_app_id
-        self.token = self.settings.custom_token
+        self.token = (self.settings.get_password("custom_token") or "").strip()
 
         self.headers = {
             "Authorization": self.token,
@@ -81,7 +81,7 @@ class GPSGateClient:
         if not self.settings.custom_app_id:
             raise GPSGateAPIError(_("GPS Gate App ID is not configured."))
         
-        if not self.settings.custom_token:
+        if not self.settings.get_password("custom_token"):
             raise GPSGateAPIError(_("GPS Gate Token is not configured."))
     
     def _build_url(self, endpoint):
