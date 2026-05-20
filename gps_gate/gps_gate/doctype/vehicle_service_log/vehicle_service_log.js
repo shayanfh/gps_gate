@@ -25,10 +25,27 @@ frappe.ui.form.on("Vehicle Service Log", {
         }
     },
 
-    vehicle(frm) {
-        // Auto-populate service types and schedules for manual creation only
-        // Skip if this form was opened from a Schedule's "Create Service Log" button
-        if (!frm.is_new() || !frm.doc.vehicle || frm._from_schedule_button) return;
+   
+    service_type(frm) {
+    
+        if (!frm.doc.vehicle) {
+            console.log("⛔ No vehicle selected");
+            return;
+        }
+
+        const service_types = (frm.doc.service_type || [])
+            .map(row => row.service_type)
+            .filter(Boolean);
+
+      
+        if (!service_types.length) {
+            console.log("⛔ No service_type selected");
+
+            frm.clear_table("schedule_reference");
+            frm.refresh_field("schedule_reference");
+
+            return;
+        }
 
         frappe.call({
             method: "frappe.client.get_list",
@@ -36,22 +53,31 @@ frappe.ui.form.on("Vehicle Service Log", {
                 doctype: "Vehicle Service Schedule",
                 filters: {
                     vehicle: frm.doc.vehicle,
+                    service_type: ["in", service_types],
                     status: ["in", ["Due Soon", "Overdue"]]
                 },
-                fields: ["name", "service_type"],
-                order_by: "status asc, due_date asc"
+                fields: ["name", "service_type", "vehicle", "status", "due_date"],
+                order_by: "due_date asc"
             },
             callback(r) {
-                frm.clear_table("service_type");
+                console.log("📦 Matching schedules:", r.message);
+
                 frm.clear_table("schedule_reference");
+
                 if (r.message && r.message.length) {
-                    r.message.forEach(s => {
-                        frm.add_child("service_type", { service_type: s.service_type });
-                        frm.add_child("schedule_reference", { schedule_reference: s.name });
+                    r.message.forEach(schedule => {
+                        frm.add_child("schedule_reference", {
+                            schedule_reference: schedule.name
+                        });
                     });
+                } else {
+                    console.log("⚠️ No matching schedules found");
                 }
-                frm.refresh_field("service_type");
+
                 frm.refresh_field("schedule_reference");
+            },
+            error(err) {
+                console.log("❌ API error:", err);
             }
         });
     },
@@ -97,3 +123,5 @@ frappe.ui.form.on("Vehicle Service Log", {
         }
     }
 });
+
+
