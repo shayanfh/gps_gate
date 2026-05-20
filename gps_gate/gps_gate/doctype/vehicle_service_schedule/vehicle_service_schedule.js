@@ -32,8 +32,8 @@ frappe.ui.form.on("Vehicle Service Schedule", {
                 });
             }
 
-            // Create Service Log button — only if Overdue or Due Soon
-            if (["Overdue", "Due Soon"].includes(frm.doc.status)) {
+            // Create Service Log button — available for all statuses except Cancelled
+            if (frm.doc.status !== "Cancelled") {
                 frm.add_custom_button(__("Create Service Log"), function () {
                     frappe.route_options = {
                         vehicle: frm.doc.vehicle,
