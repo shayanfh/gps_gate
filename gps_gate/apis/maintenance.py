@@ -47,6 +47,50 @@ def _fetch_gpsgate_initial_maintenance(vehicle):
     return None, None
 
 
+def _log_has_service_type(vehicle_name, service_type):
+    """Return True if a submitted Vehicle Service Log for the vehicle includes the given service type."""
+    parent_names = frappe.get_all(
+        "Vehicle Service Log",
+        filters={"vehicle": vehicle_name, "docstatus": 1},
+        pluck="name",
+    )
+    if not parent_names:
+        return False
+    return bool(frappe.db.exists(
+        "Vehicle Service Log Service Type",
+        {
+            "service_type": service_type,
+            "parent": ["in", parent_names],
+            "parenttype": "Vehicle Service Log",
+        },
+    ))
+
+
+def _get_last_log_for_service_type(vehicle_name, service_type):
+    """Return the most recent submitted log dict that includes the given service type, or None."""
+    parent_names = frappe.get_all(
+        "Vehicle Service Log Service Type",
+        filters={
+            "service_type": service_type,
+            "parenttype": "Vehicle Service Log",
+        },
+        pluck="parent",
+    )
+    if not parent_names:
+        return None
+    return frappe.db.get_value(
+        "Vehicle Service Log",
+        {
+            "name": ["in", parent_names],
+            "vehicle": vehicle_name,
+            "docstatus": 1,
+        },
+        ["service_date", "service_odometer", "service_engine_hours"],
+        as_dict=True,
+        order_by="service_date desc",
+    )
+
+
 def _create_initial_service_logs(vehicle, vehicle_type, init_date, init_km):
     """
     For each active rule in the vehicle type, create a submitted initial
@@ -64,21 +108,13 @@ def _create_initial_service_logs(vehicle, vehicle_type, init_date, init_km):
         if not rule.auto_create_schedule:
             continue
 
-        already_exists = frappe.db.exists(
-            "Vehicle Service Log",
-            {
-                "vehicle": vehicle.name,
-                "service_type": rule.service_type,
-                "docstatus": 1,
-            },
-        )
-        if already_exists:
+        if _log_has_service_type(vehicle.name, rule.service_type):
             continue
 
         try:
             log = frappe.new_doc("Vehicle Service Log")
             log.vehicle = vehicle.name
-            log.service_type = rule.service_type
+            log.append("service_type", {"service_type": rule.service_type})
             log.service_date = init_date
             log.service_odometer = init_km
             log.service_engine_hours = 0
@@ -145,17 +181,7 @@ def generate_schedules_for_vehicle(vehicle_name):
         if existing:
             continue
 
-        last_log = frappe.db.get_value(
-            "Vehicle Service Log",
-            {
-                "vehicle": vehicle_name,
-                "service_type": rule.service_type,
-                "docstatus": 1,
-            },
-            ["service_date", "service_odometer", "service_engine_hours"],
-            as_dict=True,
-            order_by="service_date desc",
-        )
+        last_log = _get_last_log_for_service_type(vehicle_name, rule.service_type)
 
         if last_log:
             last_date = last_log.service_date

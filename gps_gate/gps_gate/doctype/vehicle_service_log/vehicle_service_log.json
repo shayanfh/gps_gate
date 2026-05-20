@@ -38,13 +38,9 @@
   },
   {
    "fieldname": "service_type",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
+   "fieldtype": "Table MultiSelect",
    "label": "Service Type",
-   "options": "Vehicle Service Type",
-   "reqd": 1
+   "options": "Vehicle Service Log Service Type"
   },
   {
    "default": "Today",
@@ -72,9 +68,9 @@
   },
   {
    "fieldname": "schedule_reference",
-   "fieldtype": "Link",
+   "fieldtype": "Table MultiSelect",
    "label": "Schedule Reference",
-   "options": "Vehicle Service Schedule"
+   "options": "Vehicle Service Log Schedule"
   },
   {
    "fieldname": "cost_section",
