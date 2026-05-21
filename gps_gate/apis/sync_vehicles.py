@@ -11,6 +11,27 @@ from gps_gate.gps_gate_api import GPSGateClient, GPSGateAPIError
 
 _SYNC_CANCEL_KEY = "gps_gate_vehicle_sync_cancel"
 
+def _set_cancel_flag(value):
+    frappe.db.set_default(_SYNC_CANCEL_KEY, str(value))
+    frappe.db.commit()
+
+
+def _get_cancel_flag():
+    # Commit first to start a new transaction and get a fresh snapshot.
+    # MySQL REPEATABLE READ would otherwise return the stale value from the
+    # transaction's start, missing commits from the web-worker cancel request.
+    frappe.db.commit()
+    result = frappe.db.sql(
+        "SELECT `defvalue` FROM `tabDefaultValue` WHERE `defkey` = %s AND `parent` = '__default'",
+        (_SYNC_CANCEL_KEY,),
+    )
+    return result[0][0] if result else "0"
+
+
+def _clear_cancel_flag():
+    frappe.db.set_default(_SYNC_CANCEL_KEY, "0")
+    frappe.db.commit()
+
 
 _CUSTOM_FIELD_MAP = {
     "Vehicle Model": "model",
@@ -45,19 +66,22 @@ _FIELD_DEFAULTS = {
 _default_vehicle_type_cache = None
 
 
-def _is_sync_cancelled():
-    """
-    Check if user requested cancellation.
+def _is_sync_cancelled(context=""):
+    value = _get_cancel_flag()
 
-    Frappe/Redis cache may return:
-    - "1"
-    - b"1"
-    - 1
+    cancelled = value == "1"
 
-    So use cint() to safely convert it.
-    """
-    return cint(frappe.cache().get_value(_SYNC_CANCEL_KEY)) == 1
+    log = frappe.logger("vehicle_sync", allow_site=True, file_count=5)
+    log.setLevel(logging.DEBUG)
 
+    log.warning(
+        f"🔎 DB cancel check context={context} "
+        f"site={getattr(frappe.local, 'site', None)} "
+        f"user={frappe.session.user if getattr(frappe.local, 'session', None) else None} "
+        f"raw_value={value!r} cancelled={cancelled}"
+    )
+
+    return cancelled
 
 def _emit(user, current, total, label="", status="running", **extra):
     msg = {
@@ -297,16 +321,24 @@ def _sync_single_vehicle(u, client, log):
 
 
 def _run_sync(triggered_by=None):
-    """
-    Background job called by frappe.enqueue.
-    """
-    frappe.cache().delete_value(_SYNC_CANCEL_KEY)
+    log = frappe.logger("vehicle_sync", allow_site=True, file_count=5)
+    log.setLevel(logging.DEBUG)
+
+    log.warning("🚀 _run_sync started")
+    log.warning(
+        f"🚀 site={getattr(frappe.local, 'site', None)} "
+        f"triggered_by={triggered_by}"
+    )
+
+    log.warning(f"🚀 cancel flag BEFORE clear value={_get_cancel_flag()!r}")
+
+    _clear_cancel_flag()
+
+    log.warning(f"🚀 cancel flag AFTER clear value={_get_cancel_flag()!r}")
 
     def pub(**kw):
         _emit(triggered_by, **kw)
 
-    log = frappe.logger("vehicle_sync", allow_site=True, file_count=5)
-    log.setLevel(logging.DEBUG)
     log.info("===== Vehicle sync started =====")
 
     try:
@@ -360,7 +392,7 @@ def _run_sync(triggered_by=None):
             updated=0,
             errors=0,
         )
-        frappe.cache().delete_value(_SYNC_CANCEL_KEY)
+        _clear_cancel_flag()
         return
 
     log.info(f"Total users fetched: {len(users)}")
@@ -488,7 +520,7 @@ def sync_vehicles_from_gps_gate():
     """
     Enqueue the vehicle sync as a long background job.
     """
-    frappe.cache().delete_value(_SYNC_CANCEL_KEY)
+    _clear_cancel_flag()
 
     frappe.enqueue(
         "gps_gate.apis.sync_vehicles._run_sync",
@@ -504,18 +536,20 @@ def sync_vehicles_from_gps_gate():
 
 @frappe.whitelist()
 def cancel_vehicle_sync():
-    """
-    Request cancellation.
+    log = frappe.logger("vehicle_sync", allow_site=True, file_count=5)
+    log.setLevel(logging.DEBUG)
 
-    The running job will stop at the next cancellation check.
-    It cannot kill an HTTP request that is already waiting for GPSGate response,
-    but it will stop before processing the next vehicle.
-    """
-    frappe.cache().set_value(
-        _SYNC_CANCEL_KEY,
-        "1",
-        expires_in_sec=600,
+    log.warning("🛑 cancel_vehicle_sync called")
+    log.warning(
+        f"🛑 cancel request site={getattr(frappe.local, 'site', None)} "
+        f"user={frappe.session.user}"
     )
+
+    log.warning(f"🛑 cancel flag BEFORE set value={_get_cancel_flag()!r}")
+
+    _set_cancel_flag("1")
+
+    log.warning(f"🛑 cancel flag AFTER set value={_get_cancel_flag()!r}")
 
     frappe.publish_realtime(
         "vehicle_sync_progress",
@@ -527,7 +561,6 @@ def cancel_vehicle_sync():
     )
 
     return {"status": "cancel_requested"}
-
 
 @frappe.whitelist()
 def bulk_set_vehicle_type(vehicles, vehicle_type):
