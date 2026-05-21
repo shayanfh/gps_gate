@@ -5,28 +5,39 @@ frappe.ui.form.on("Vehicle Service Log", {
     setup(frm) {
         frm._from_schedule_button = false;
         frm._pending_prefill = null;
+        frm._applying_prefill = false;
     },
 
     onload(frm) {
-        // Detect if opened from "Create Service Log" button on a Schedule form
-        if (frm.is_new() && frappe.route_options) {
-            const init_st = frappe.route_options._init_service_type;
-            const init_sched = frappe.route_options._init_schedule;
-            if (init_st || init_sched) {
-                frm._from_schedule_button = true;
-                frm._pending_prefill = {
-                    service_type: init_st,
-                    schedule: init_sched
-                };
-                // Remove custom keys so Frappe doesn't try to set them as fields
-                delete frappe.route_options._init_service_type;
-                delete frappe.route_options._init_schedule;
-            }
-        }
-    },
+
+    if (!frm.is_new()) return;
+
+    const raw_prefill = sessionStorage.getItem("vehicle_service_log_prefill");
+
+    if (!raw_prefill) return;
+
+    const prefill = JSON.parse(raw_prefill);
+
+    frm._from_schedule_button = true;
+    frm._pending_prefill = {
+        service_type: prefill.service_type,
+        schedule: prefill.schedule
+    };
+
+    if (prefill.vehicle) {
+        frm.set_value("vehicle", prefill.vehicle);
+    }
+
+    sessionStorage.removeItem("vehicle_service_log_prefill");
+},
 
    
     service_type(frm) {
+
+        if (frm._applying_prefill) {
+            console.log("⛔ Applying prefill, skip auto lookup");
+            return;
+        }
     
         if (!frm.doc.vehicle) {
             console.log("⛔ No vehicle selected");
@@ -83,20 +94,26 @@ frappe.ui.form.on("Vehicle Service Log", {
     },
 
     refresh(frm) {
-        // Apply pre-fill from Schedule button (only on first refresh after onload)
         if (frm.is_new() && frm._pending_prefill) {
             const { service_type, schedule } = frm._pending_prefill;
             frm._pending_prefill = null;
+
+            frm._applying_prefill = true;
+
             if (service_type) {
-                frm.add_child("service_type", { service_type });
+                frm.clear_table("service_type");
+                frm.add_child("service_type", { service_type: service_type });
                 frm.refresh_field("service_type");
             }
+
             if (schedule) {
+                frm.clear_table("schedule_reference");
                 frm.add_child("schedule_reference", { schedule_reference: schedule });
                 frm.refresh_field("schedule_reference");
             }
+            frm._applying_prefill = false;
+            frm._from_schedule_button = false;
         }
-
         // Show summary headline
         const service_types = (frm.doc.service_type || [])
             .map(r => r.service_type)

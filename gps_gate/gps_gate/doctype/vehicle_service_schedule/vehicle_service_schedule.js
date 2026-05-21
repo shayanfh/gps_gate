@@ -33,18 +33,27 @@ frappe.ui.form.on("Vehicle Service Schedule", {
             }
 
             // Create Service Log button — available for all statuses except Cancelled
-            if (frm.doc.status !== "Cancelled") {
+           if (frm.doc.status !== "Cancelled") {
                 frm.add_custom_button(__("Create Service Log"), function () {
-                    frappe.route_options = {
+                    const payload = {
                         vehicle: frm.doc.vehicle,
-                        _init_service_type: frm.doc.service_type,
-                        _init_schedule: frm.doc.name
+                        service_type: frm.doc.service_type,
+                        schedule: frm.doc.name
                     };
-                    frappe.new_doc("Vehicle Service Log");
+
+
+                    sessionStorage.setItem(
+                        "vehicle_service_log_prefill",
+                        JSON.stringify(payload)
+                    );
+
+                    frappe.new_doc("Vehicle Service Log", {
+                        vehicle: frm.doc.vehicle
+                    });
                 });
             }
-        }
-    },
+                    }
+                },
 
     show_status_indicator(frm) {
         const status_color = {
