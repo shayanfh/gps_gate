@@ -8,7 +8,7 @@ from gps_gate.apis.maintenance import (
 
 
 NOTIFICATION_STATUSES = ["Due Soon", "Overdue"]
-NOTIFICATION_ROLE = "System Manager"
+NOTIFICATION_ROLE = "Maintenance Manager"
 
 # اگر نمی‌خوای هر ساعت برای یک schedule نوتیفیکیشن تکراری بره،
 # این عدد مشخص می‌کنه حداقل چند ساعت فاصله بین notificationها باشد.
