@@ -124,7 +124,7 @@
    "label": "Active Vehicles",
    "link_to": "Vehicle",
    "name": "sc-fleet-active",
-   "stats_filter": "[{\"fieldname\":\"custom_gpsgate_user_id\",\"based_on\":\"GPS Gate User ID\",\"status\":\"0\",\"operator\":\">\"}]",
+   "stats_filter": "[[\"custom_gpsgate_user_id\",\">\",\"0\"]]",
    "type": "DocType"
   },
   {
@@ -134,7 +134,7 @@
    "label": "No Vehicle Type",
    "link_to": "Vehicle",
    "name": "sc-fleet-no-type",
-   "stats_filter": "[{\"fieldname\":\"custom_vehicle_type\",\"based_on\":\"Vehicle Type\",\"status\":\"\"}]",
+   "stats_filter": "[[\"custom_vehicle_type\",\"is\",\"not set\"]]",
    "type": "DocType"
   },
   {
@@ -144,7 +144,7 @@
    "label": "No Odometer Reading",
    "link_to": "Vehicle",
    "name": "sc-fleet-no-odo",
-   "stats_filter": "[{\"fieldname\":\"custom_gpsgate_odometer\",\"based_on\":\"GPS Gate Odometer\",\"status\":\"0\"}]",
+   "stats_filter": "[[\"custom_gpsgate_odometer\",\"=\",0]]",
    "type": "DocType"
   },
   {
@@ -164,7 +164,7 @@
    "label": "Failed GPS Syncs",
    "link_to": "GPS Gate Sync Log",
    "name": "sc-fleet-failed",
-   "stats_filter": "[{\"fieldname\":\"status\",\"based_on\":\"Status\",\"status\":\"Failed\"}]",
+   "stats_filter": "[[\"status\",\"=\",\"Failed\"]]",
    "type": "DocType"
   },
   {
@@ -174,7 +174,7 @@
    "label": "Overdue Services",
    "link_to": "Vehicle Service Schedule",
    "name": "sc-today-overdue",
-   "stats_filter": "[{\"fieldname\":\"status\",\"based_on\":\"Status\",\"status\":\"Overdue\"}]",
+   "stats_filter": "[[\"status\",\"=\",\"Overdue\"]]",
    "type": "DocType"
   },
   {
@@ -184,7 +184,7 @@
    "label": "Due Services",
    "link_to": "Vehicle Service Schedule",
    "name": "sc-today-due",
-   "stats_filter": "[{\"fieldname\":\"status\",\"based_on\":\"Status\",\"status\":\"Due Soon\"}]",
+   "stats_filter": "[[\"status\",\"=\",\"Due Soon\"]]",
    "type": "DocType"
   },
   {
@@ -194,7 +194,7 @@
    "label": "Upcoming Services",
    "link_to": "Vehicle Service Schedule",
    "name": "sc-today-upcoming",
-   "stats_filter": "[{\"fieldname\":\"status\",\"based_on\":\"Status\",\"status\":\"OK\"}]",
+   "stats_filter": "[[\"status\",\"=\",\"OK\"]]",
    "type": "DocType"
   },
   {
@@ -204,7 +204,7 @@
    "label": "Completed Services",
    "link_to": "Vehicle Service Schedule",
    "name": "sc-today-completed",
-   "stats_filter": "[{\"fieldname\":\"status\",\"based_on\":\"Status\",\"status\":\"Completed\"}]",
+   "stats_filter": "[[\"status\",\"=\",\"Completed\"]]",
    "type": "DocType"
   },
   {
@@ -214,7 +214,7 @@
    "label": "Missing Maintenance Date",
    "link_to": "Vehicle",
    "name": "sc-today-no-date",
-   "stats_filter": "[{\"fieldname\":\"custom_last_maintenance_date\",\"based_on\":\"Last Maintenance Date\",\"status\":\"\"}]",
+   "stats_filter": "[[\"custom_last_maintenance_date\",\"is\",\"not set\"]]",
    "type": "DocType"
   },
   {
@@ -224,7 +224,7 @@
    "label": "Missing Maintenance KM",
    "link_to": "Vehicle",
    "name": "sc-today-no-km",
-   "stats_filter": "[{\"fieldname\":\"custom_last_maintenance_km\",\"based_on\":\"Last Maintenance KM\",\"status\":\"0\"}]",
+   "stats_filter": "[[\"custom_last_maintenance_km\",\"=\",0]]",
    "type": "DocType"
   },
   {
