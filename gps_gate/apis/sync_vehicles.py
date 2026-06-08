@@ -412,9 +412,14 @@ def _run_sync(triggered_by=None):
         )
         return
 
+    log.info(f"Device type ID to match: {device_type_id!r} (type={type(device_type_id).__name__})")
+    if users:
+        sample_ids = [u.get("userTemplateID") for u in users[:5]]
+        log.info(f"Sample userTemplateID values (first 5): {sample_ids!r}")
+
     device_users = [
         u for u in users
-        if u.get("userTemplateID") == device_type_id
+        if cint(u.get("userTemplateID")) == device_type_id
     ]
 
     total = len(device_users)

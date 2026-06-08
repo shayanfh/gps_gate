@@ -1,3 +1,4 @@
+#bench --site mozaic_technologies.com execute gps_gate.apis.cleanup.cleanup_maintenance_data
 import frappe
 
 
@@ -19,6 +20,7 @@ def cleanup_maintenance_data():
         "logs_deleted": 0,
         "schedules_deleted": 0,
         "vehicles_deleted": 0,
+        "gps_users_deleted": 0,
         "errors": [],
     }
 
@@ -71,7 +73,27 @@ def cleanup_maintenance_data():
                 {"doctype": "Vehicle Service Schedule", "name": name, "error": frappe.get_traceback()}
             )
 
-    # ── 3. Vehicles ──────────────────────────────────────────────────────────
+    # ── 3. GPS Gate Users ────────────────────────────────────────────────────
+    gps_users = frappe.get_all("GPS Gate User", pluck="name")
+
+    for name in gps_users:
+        try:
+            frappe.delete_doc(
+                "GPS Gate User",
+                name,
+                force=True,
+                ignore_permissions=True,
+            )
+            frappe.db.commit()
+            result["gps_users_deleted"] += 1
+
+        except Exception:
+            frappe.db.rollback()
+            result["errors"].append(
+                {"doctype": "GPS Gate User", "name": name, "error": frappe.get_traceback()}
+            )
+
+    # ── 4. Vehicles ──────────────────────────────────────────────────────────
     vehicles = frappe.get_all("Vehicle", pluck="name")
 
     for name in vehicles:
