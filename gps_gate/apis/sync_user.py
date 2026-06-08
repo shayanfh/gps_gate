@@ -226,9 +226,22 @@ def get_gps_gate_user_types1():
                     "name"
                 )
 
+                # Fallback: if not found by ID, search by user_type_name and update ID
+                if not existing_name:
+                    existing_name = frappe.db.get_value(
+                        "GPS User Types",
+                        {"user_type_name": name},
+                        "name"
+                    )
+                    if existing_name:
+                        # Rename doc to new ID (autoname=field:user_type_id)
+                        frappe.rename_doc("GPS User Types", existing_name, gps_id, ignore_permissions=True)
+                        existing_name = gps_id
+
                 if existing_name:
                     # Update existing record
                     doc = frappe.get_doc("GPS User Types", existing_name)
+                    doc.user_type_id = gps_id
                     doc.user_type_name = name
                     doc.description = ut.get("description") or ""
                     doc.is_synced = 1
