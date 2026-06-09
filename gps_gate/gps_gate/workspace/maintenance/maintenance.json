@@ -115,7 +115,8 @@
    "link_to": "Vehicle",
    "name": "sc-fleet-total",
    "stats_filter": null,
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle"
   },
   {
    "color": "Green",
@@ -125,7 +126,8 @@
    "link_to": "Vehicle",
    "name": "sc-fleet-active",
    "stats_filter": "[[\"custom_gpsgate_user_id\",\">\",\"0\"]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle?custom_gpsgate_user_id=%5B%22%3E%22%2C%220%22%5D"
   },
   {
    "color": "Orange",
@@ -135,7 +137,8 @@
    "link_to": "Vehicle",
    "name": "sc-fleet-no-type",
    "stats_filter": "[[\"custom_vehicle_type\",\"is\",\"not set\"]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle?custom_vehicle_type=%5B%22is%22%2C%22not+set%22%5D"
   },
   {
    "color": "Yellow",
@@ -145,7 +148,8 @@
    "link_to": "Vehicle",
    "name": "sc-fleet-no-odo",
    "stats_filter": "[[\"custom_gpsgate_odometer\",\"=\",0]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle?custom_gpsgate_odometer=0"
   },
   {
    "color": "Purple",
@@ -155,7 +159,8 @@
    "link_to": "Vehicle",
    "name": "sc-fleet-no-log",
    "stats_filter": null,
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle"
   },
   {
    "color": "Red",
@@ -165,7 +170,8 @@
    "link_to": "GPS Gate Sync Log",
    "name": "sc-fleet-failed",
    "stats_filter": "[[\"status\",\"=\",\"Failed\"]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/gps-gate-sync-log?status=Failed"
   },
   {
    "color": "Red",
@@ -175,7 +181,8 @@
    "link_to": "Vehicle Service Schedule",
    "name": "sc-today-overdue",
    "stats_filter": "[[\"status\",\"=\",\"Overdue\"]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle-service-schedule?status=Overdue"
   },
   {
    "color": "Orange",
@@ -185,7 +192,8 @@
    "link_to": "Vehicle Service Schedule",
    "name": "sc-today-due",
    "stats_filter": "[[\"status\",\"=\",\"Due Soon\"]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle-service-schedule?status=Due%20Soon"
   },
   {
    "color": "Green",
@@ -195,7 +203,8 @@
    "link_to": "Vehicle Service Schedule",
    "name": "sc-today-upcoming",
    "stats_filter": "[[\"status\",\"=\",\"OK\"]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle-service-schedule?status=OK"
   },
   {
    "color": "Blue",
@@ -205,7 +214,8 @@
    "link_to": "Vehicle Service Schedule",
    "name": "sc-today-completed",
    "stats_filter": "[[\"status\",\"=\",\"Completed\"]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle-service-schedule?status=Completed"
   },
   {
    "color": "Yellow",
@@ -215,7 +225,8 @@
    "link_to": "Vehicle",
    "name": "sc-today-no-date",
    "stats_filter": "[[\"custom_last_maintenance_date\",\"is\",\"not set\"]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle?custom_last_maintenance_date=%5B%22is%22%2C%22not+set%22%5D"
   },
   {
    "color": "Yellow",
@@ -225,7 +236,8 @@
    "link_to": "Vehicle",
    "name": "sc-today-no-km",
    "stats_filter": "[[\"custom_last_maintenance_km\",\"=\",0]]",
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle?custom_last_maintenance_km=0"
   },
   {
    "color": "Blue",
@@ -235,7 +247,8 @@
    "link_to": "Vehicle",
    "name": "sc-action-vehicles",
    "stats_filter": null,
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle"
   },
   {
    "color": "Blue",
@@ -245,7 +258,8 @@
    "link_to": "Vehicle Service Schedule",
    "name": "sc-action-schedules",
    "stats_filter": null,
-   "type": "DocType"
+   "type": "URL",
+   "url": "/app/vehicle-service-schedule"
   }
  ],
  "title": "Maintenance"
