@@ -73,6 +73,8 @@ frappe.ui.form.on("Vehicle Service Log", {
             callback(r) {
                 console.log("📦 Matching schedules:", r.message);
 
+                if (!frm.is_new()) return;
+
                 frm.clear_table("schedule_reference");
 
                 if (r.message && r.message.length) {

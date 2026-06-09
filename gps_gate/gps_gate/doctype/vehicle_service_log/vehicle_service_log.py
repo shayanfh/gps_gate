@@ -15,10 +15,11 @@ class VehicleServiceLog(Document):
         if not self.service_type:
             frappe.throw(_("Please select at least one Service Type."))
 
-    def on_update(self):
-        _sync_to_gps_gate(self)
+    # def on_update(self):
+    #     _sync_to_gps_gate(self)
 
     def on_submit(self):
+        _sync_to_gps_gate(self)
         # Mark each referenced schedule as Completed
         for row in self.schedule_reference:
             frappe.db.set_value(
