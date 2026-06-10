@@ -521,6 +521,11 @@ def sync_vehicles_from_gps_gate():
     """
     Enqueue the vehicle sync as a long background job.
     """
+    if not frappe.db.exists("Vehicle Type", {"is_active": 1}):
+        frappe.throw(
+            _("Please add at least one active Vehicle Type before syncing vehicles.")
+        )
+
     _clear_cancel_flag()
 
     frappe.enqueue(
