@@ -186,6 +186,16 @@
    "url": "/app/gps-gate-sync-log?status=Failed"
   },
   {
+   "color": "Green",
+   "doctype": "Workspace Shortcut",
+   "format": null,
+   "label": "Vehicle Overdue & Due Maintenance Summary",
+   "link_to": "Vehicle Maintenance Summary",
+   "name": "sc-report-summary",
+   "stats_filter": null,
+   "type": "Report"
+  },
+  {
    "color": "Red",
    "doctype": "Workspace Shortcut",
    "format": "{} Overdue",
@@ -272,16 +282,6 @@
    "stats_filter": null,
    "type": "URL",
    "url": "/app/vehicle-service-schedule"
-  },
-  {
-   "color": "Green",
-   "doctype": "Workspace Shortcut",
-   "format": null,
-   "label": "Vehicle Maintenance Summary",
-   "link_to": "Vehicle Maintenance Summary",
-   "name": "sc-report-summary",
-   "stats_filter": null,
-   "type": "Report"
   }
  ],
  "title": "Maintenance"
