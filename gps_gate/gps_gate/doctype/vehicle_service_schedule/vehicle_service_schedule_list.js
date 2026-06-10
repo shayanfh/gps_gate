@@ -3,6 +3,21 @@
 
 frappe.listview_settings["Vehicle Service Schedule"] = {
     onload: function (listview) {
+        listview.page.add_inner_button(__("Run Maintenance Job"), function () {
+            frappe.call({
+                method: "gps_gate.apis.maintenance_jobs.hourly_vehicle_maintenance_job",
+                freeze: true,
+                freeze_message: __("Running maintenance job..."),
+                callback: function () {
+                    frappe.show_alert({
+                        message: __("Maintenance job completed"),
+                        indicator: "green"
+                    });
+                    listview.refresh();
+                }
+            });
+        });
+
         listview.page.add_inner_button(__("Refresh All Status"), function () {
             frappe.confirm(
                 __("Re-evaluate status for all open Vehicle Service Schedules?"),
