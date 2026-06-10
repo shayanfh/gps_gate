@@ -200,6 +200,7 @@
       "fieldname": "custom_vehicle_type",
       "fieldtype": "Link",
       "options": "Vehicle Type",
+      "description": "Changing the Vehicle Type may reset the maintenance schedule. Existing Vehicle Service Schedules will be deleted only when this vehicle has no Vehicle Service Log.",
       "reqd": 1,
       "idx": 0,
       "in_list_view": 1,

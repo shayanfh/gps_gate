@@ -146,13 +146,11 @@ doctype_js = {"Company": "public/js/company.js"}
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "Vehicle": {
+        "on_update": "gps_gate.apis.vehicle_hooks.on_update",
+    }
+}
 
 scheduler_events = {
     "hourly_long": [
