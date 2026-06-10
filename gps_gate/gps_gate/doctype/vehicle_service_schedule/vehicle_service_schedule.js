@@ -7,6 +7,21 @@ frappe.ui.form.on("Vehicle Service Schedule", {
 
         if (!frm.is_new()) {
             // Mark Cancelled button — only if not already Completed or Cancelled
+            frm.add_custom_button(__("Run Maintenance Job"), function () {
+                frappe.call({
+                    method: "gps_gate.apis.maintenance_jobs.hourly_vehicle_maintenance_job",
+                    freeze: true,
+                    freeze_message: __("Running maintenance job..."),
+                    callback: function () {
+                        frappe.show_alert({
+                            message: __("Maintenance job completed"),
+                            indicator: "green"
+                        });
+                        frm.reload_doc();
+                    }
+                });
+            }, __("Actions"));
+
             if (!["Completed", "Cancelled"].includes(frm.doc.status)) {
                 frm.add_custom_button(__("Mark Cancelled"), function () {
                     frappe.confirm(

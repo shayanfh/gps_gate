@@ -15,6 +15,7 @@ NOTIFICATION_ROLE = "Maintenance Manager"
 NOTIFICATION_REPEAT_AFTER_HOURS = 24
 
 
+@frappe.whitelist()
 def hourly_vehicle_maintenance_job():
     """
     This job runs every hour.
