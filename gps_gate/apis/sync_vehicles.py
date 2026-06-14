@@ -113,7 +113,9 @@ def _parse_gps_date(value):
 
     value = value.strip()
 
-    for fmt in ("%d-%b-%Y", "%Y-%m-%d", "%d/%m/%Y"):
+    # Try unambiguous formats first, then M/D/YYYY last because it can only be
+    # distinguished from D/M/YYYY when the day part exceeds 12.
+    for fmt in ("%d-%b-%Y", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"):
         try:
             return datetime.strptime(value, fmt).strftime("%Y-%m-%d")
         except ValueError:
@@ -138,7 +140,21 @@ def _apply_accumulators(doc, accumulators, log):
         log.info("No odometer accumulator found; using existing odometer value.")
 
 
-def _apply_custom_fields(doc, custom_fields):
+_DEBUG_FIELDS = {"custom_last_maintenance_date", "custom_last_maintenance_km"}
+
+
+def _apply_custom_fields(doc, custom_fields, log=None):
+    # Build a name→value map of everything GPS Gate returned for this vehicle.
+    # Logged once so we can see whether the target fields even exist in the response.
+    raw_map = {cf.get("name"): cf.get("value") for cf in (custom_fields or [])}
+
+    if log:
+        log.info(
+            f"  [custom_fields] vehicle={doc.name} "
+            f"raw Last Maintenance Date={raw_map.get('Last Maintenance Date')!r} "
+            f"raw Last Maintenance KM={raw_map.get('Last Maintenance KM')!r}"
+        )
+
     for cf in custom_fields or []:
         fieldname = _CUSTOM_FIELD_MAP.get(cf.get("name"))
 
@@ -152,11 +168,21 @@ def _apply_custom_fields(doc, custom_fields):
 
         elif fieldname in _FLOAT_FIELDS:
             try:
-                value = float(value) if value else 0.0
+                # Strip spaces and commas that GPS Gate sometimes embeds in numbers
+                # (e.g. "49  000" or "49,000" instead of "49000").
+                cleaned = value.replace(",", "").replace(" ", "") if value else ""
+                value = float(cleaned) if cleaned else 0.0
             except (ValueError, TypeError):
                 value = 0.0
 
         doc.set(fieldname, value)
+
+        # Log only the two fields we're investigating to keep output focused.
+        if log and fieldname in _DEBUG_FIELDS:
+            log.info(
+                f"  [custom_fields] {fieldname}: "
+                f"raw={cf.get('value')!r} → parsed={value!r}"
+            )
 
 
 def _get_default_vehicle_type():
@@ -283,7 +309,7 @@ def _sync_single_vehicle(u, client, log):
         if _is_sync_cancelled():
             return "cancelled"
 
-        _apply_custom_fields(doc, custom_fields)
+        _apply_custom_fields(doc, custom_fields, log=log)
 
     except Exception:
         tb = frappe.get_traceback()
