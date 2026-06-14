@@ -65,7 +65,9 @@ def _fetch_gpsgate_initial_maintenance(vehicle):
 
             api_date = _parse_gps_date(cf_map.get("Last Maintenance Date", ""))
             try:
-                api_km = float(cf_map.get("Last Maintenance KM") or 0)
+                raw_km = str(cf_map.get("Last Maintenance KM") or "")
+                cleaned_km = raw_km.replace(",", "").replace(" ", "")
+                api_km = float(cleaned_km) if cleaned_km else 0.0
             except (ValueError, TypeError):
                 api_km = 0.0
 
