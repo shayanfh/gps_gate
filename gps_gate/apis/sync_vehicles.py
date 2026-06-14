@@ -74,13 +74,6 @@ def _is_sync_cancelled(context=""):
     log = frappe.logger("vehicle_sync", allow_site=True, file_count=5)
     log.setLevel(logging.DEBUG)
 
-    log.warning(
-        f"🔎 DB cancel check context={context} "
-        f"site={getattr(frappe.local, 'site', None)} "
-        f"user={frappe.session.user if getattr(frappe.local, 'session', None) else None} "
-        f"raw_value={value!r} cancelled={cancelled}"
-    )
-
     return cancelled
 
 def _emit(user, current, total, label="", status="running", **extra):
@@ -185,6 +178,9 @@ def _fill_mandatory_fields(doc):
 
     for field in meta.fields:
         if not field.reqd:
+            continue
+
+        if field.set_only_once:
             continue
 
         if doc.get(field.fieldname):
@@ -305,6 +301,8 @@ def _sync_single_vehicle(u, client, log):
     if _is_sync_cancelled():
         return "cancelled"
 
+    doc.flags.ignore_set_only_once = True
+
     if action == "created":
         doc.insert(ignore_permissions=True)
     else:
@@ -354,6 +352,15 @@ def _run_sync(triggered_by=None):
             label=str(e.message),
         )
         return
+
+    try:
+        roles = client.get_roles()
+        unit_role = next((r for r in (roles or []) if r.get("name") == "_Unit"), None)
+        unit_user_ids = set(unit_role.get("usersIds") or []) if unit_role else set()
+        log.warning(f"📋 _Unit role user count: {len(unit_user_ids)}")
+    except Exception:
+        log.warning(f"📋 GET roles failed: {frappe.get_traceback()}")
+        unit_user_ids = set()
 
     log.info("Fetching all users from GPS Gate...")
 
@@ -438,6 +445,22 @@ def _run_sync(triggered_by=None):
     errors = []
 
     for i, u in enumerate(device_users, 1):
+        gps_id = u.get("id")
+
+        if gps_id not in unit_user_ids:
+            existing = frappe.db.get_value(
+                "Vehicle",
+                {"custom_gpsgate_user_id": gps_id},
+                "name",
+            )
+            if existing:
+                frappe.delete_doc("Vehicle", existing, ignore_permissions=True, force=True)
+                frappe.db.commit()
+                log.info(f"DELETED (not in _Unit role): {u.get('name')} → {existing}")
+            else:
+                log.info(f"SKIPPED (not in _Unit role): {u.get('name')}")
+            continue
+
         if _is_sync_cancelled():
             log.info("Sync cancelled by user before next vehicle.")
 
@@ -464,9 +487,7 @@ def _run_sync(triggered_by=None):
             errors=len(errors),
         )
 
-        gps_user_id = u.get("id")
-
-        log.info(f"[{i}/{total}] user_id={gps_user_id}")
+        log.info(f"[{i}/{total}] user_id={gps_id}")
 
         try:
             action = _sync_single_vehicle(u, client, log)
@@ -497,7 +518,7 @@ def _run_sync(triggered_by=None):
             log.error(f"  FAILED {label}:\n{tb}")
 
             frappe.log_error(
-                title=f"Vehicle Sync Error - user {gps_user_id}",
+                title=f"Vehicle Sync Error - user {gps_id}",
                 message=tb,
             )
 

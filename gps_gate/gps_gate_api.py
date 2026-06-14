@@ -361,11 +361,22 @@ class GPSGateClient:
     def get_user_types(self):
         """
         Get all user types from GPS Gate.
-        
+
         Returns:
             list: List of user type dictionaries
         """
         return self._make_request("GET", "usertypes")
+
+    def get_roles(self):
+        """
+        Get all roles from GPS Gate.
+
+        Endpoint: GET /applications/{applicationId}/roles
+
+        Returns:
+            list: List of role dictionaries
+        """
+        return self._make_request("GET", "roles")
     
     # ========== EVENT RULES API METHODS ==========
     
