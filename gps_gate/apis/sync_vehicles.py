@@ -113,9 +113,7 @@ def _parse_gps_date(value):
 
     value = value.strip()
 
-    # Try unambiguous formats first, then M/D/YYYY last because it can only be
-    # distinguished from D/M/YYYY when the day part exceeds 12.
-    for fmt in ("%d-%b-%Y", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"):
+    for fmt in ("%d-%b-%Y", "%Y-%m-%d", "%m-%d-%Y", "%m/%d/%Y"):
         try:
             return datetime.strptime(value, fmt).strftime("%Y-%m-%d")
         except ValueError:
