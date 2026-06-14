@@ -30,16 +30,77 @@ def _get_vehicle_engine_hours(vehicle):
 
 def _fetch_gpsgate_initial_maintenance(vehicle):
     """
-    Read GPS Gate last-maintenance snapshot from the Vehicle record.
-    These fields are synced from GPS Gate custom fields during vehicle sync.
+    Return the last-maintenance (date, km) for this vehicle.
+
+    Strategy:
+    1. Try to pull a fresh value directly from the GPS Gate API using the
+       vehicle's stored GPS Gate user ID.
+    2. If the API returns a date that is strictly newer than what is already
+       cached on the Vehicle record, persist the update to the database so
+       subsequent reads don't need to call the API again.
+    3. Fall back silently to the cached values on the Vehicle record when:
+       - the vehicle has no GPS Gate user ID (not yet synced)
+       - the GPS Gate API call fails for any reason
+       - GPS Gate returns no maintenance date for this vehicle
 
     Returns:
-        (date, km) tuple if data exists, otherwise (None, None)
+        (date_str, km) where date_str is "YYYY-MM-DD", km is a number.
+        (None, None) if no maintenance date is available from either source.
     """
-    gpsgate_date = vehicle.get("custom_last_maintenance_date")
-    gpsgate_km = vehicle.get("custom_last_maintenance_km") or 0
-    if gpsgate_date:
-        return gpsgate_date, gpsgate_km
+    from gps_gate.gps_gate_api import GPSGateClient, GPSGateAPIError
+    from gps_gate.apis.sync_vehicles import _parse_gps_date
+
+    # What is currently cached on the Vehicle record — used as baseline and fallback.
+    cached_date = vehicle.get("custom_last_maintenance_date")
+    cached_km = vehicle.get("custom_last_maintenance_km") or 0
+
+    gps_user_id = vehicle.get("custom_gpsgate_user_id")
+    if gps_user_id:
+        try:
+            client = GPSGateClient()
+            raw_fields = client.get_user_custom_fields(gps_user_id)
+
+            # Convert the list of {name, value} dicts into a simple lookup map.
+            cf_map = {cf.get("name"): cf.get("value") for cf in (raw_fields or [])}
+
+            api_date = _parse_gps_date(cf_map.get("Last Maintenance Date", ""))
+            try:
+                api_km = float(cf_map.get("Last Maintenance KM") or 0)
+            except (ValueError, TypeError):
+                api_km = 0.0
+
+            if api_date:
+                # Only overwrite the cached value when GPS Gate has a strictly newer date.
+                # Using getdate() ensures string-format differences don't cause false mismatches.
+                is_newer = not cached_date or getdate(api_date) > getdate(cached_date)
+                if is_newer:
+                    frappe.db.set_value(
+                        "Vehicle",
+                        vehicle.name,
+                        {
+                            "custom_last_maintenance_date": api_date,
+                            "custom_last_maintenance_km": api_km,
+                        },
+                        update_modified=False,  # don't bump modified timestamp for a background refresh
+                    )
+                    return api_date, api_km
+
+                # API date is same or older — cached values are already up to date.
+                return cached_date, cached_km
+
+        except GPSGateAPIError:
+            # GPS Gate is misconfigured or disabled — fall through to cached values.
+            pass
+        except Exception:
+            # Unexpected API failure; log it but don't block schedule generation.
+            frappe.log_error(
+                title=f"GPS Gate maintenance fetch failed — {vehicle.name}",
+                message=frappe.get_traceback(),
+            )
+
+    # No GPS user ID, or API unavailable — return whatever is cached on the record.
+    if cached_date:
+        return cached_date, cached_km
     return None, None
 
 
