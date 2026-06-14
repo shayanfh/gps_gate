@@ -11,7 +11,7 @@ Shared functions for generating and evaluating Vehicle Service Schedules.
 import frappe
 from frappe import _
 from frappe.utils import add_days, getdate
-
+import logging
 
 OPEN_SCHEDULE_STATUSES = ["OK", "Due Soon", "Overdue"]
 
@@ -134,15 +134,20 @@ def generate_schedules_for_vehicle(vehicle_name):
         int: count of created schedules
     """
 
+    log = frappe.logger("vehicle_maintenance_job", allow_site=True, file_count=5)
+    log.setLevel(logging.DEBUG)
+
     vehicle = frappe.get_doc("Vehicle", vehicle_name)
 
     vehicle_type_name = vehicle.get("custom_vehicle_type")
     if not vehicle_type_name:
+        log.info(f"[{vehicle_name}] Skipped: no custom_vehicle_type set.")
         return 0
 
     vehicle_type = frappe.get_doc("Vehicle Type", vehicle_type_name)
 
     if not vehicle_type.is_active:
+        log.info(f"[{vehicle_name}] Skipped: vehicle type '{vehicle_type_name}' is not active.")
         return 0
 
     # If this vehicle has no service logs at all, try to seed initial logs
@@ -153,8 +158,22 @@ def generate_schedules_for_vehicle(vehicle_name):
     )
     if not has_any_log:
         init_date, init_km = _fetch_gpsgate_initial_maintenance(vehicle)
+        log.info(
+            f"[{vehicle_name}] No submitted service log found. "
+            f"GPS Gate init_date={init_date}, init_km={init_km}."
+        )
         if init_date:
-            _create_initial_service_logs(vehicle, vehicle_type, init_date, init_km)
+            result = _create_initial_service_logs(vehicle, vehicle_type, init_date, init_km)
+            log.info(f"[{vehicle_name}] Initial service log creation result: {result}")
+        else:
+            log.info(f"{vehicle}")
+            log.info(
+                f"[{vehicle_name}] Skipping initial log: custom_last_maintenance_date is empty. "
+                f"purchase_date={vehicle.get('purchase_date')}, "
+                f"vehicle.creation={getdate(vehicle.creation)}."
+            )
+    else:
+        log.info(f"[{vehicle_name}] Already has submitted service log — skipping initial seed.")
 
     created = 0
 
@@ -180,10 +199,19 @@ def generate_schedules_for_vehicle(vehicle_name):
             last_date = last_log.service_date
             last_odometer = last_log.service_odometer or 0
             last_engine_hours = last_log.service_engine_hours or 0
+            log.info(
+                f"[{vehicle_name}] Rule '{rule.service_type}': "
+                f"using last log date={last_date}, odometer={last_odometer}."
+            )
         else:
             last_date = vehicle.get("purchase_date") or getdate(vehicle.creation)
             last_odometer = _get_vehicle_odometer(vehicle)
             last_engine_hours = _get_vehicle_engine_hours(vehicle)
+            log.info(
+                f"[{vehicle_name}] Rule '{rule.service_type}': "
+                f"no log found — falling back to last_date={last_date} "
+                f"(purchase_date={vehicle.get('purchase_date')}, creation={getdate(vehicle.creation)})."
+            )
 
         due_date = add_days(last_date, rule.interval_days) if rule.interval_days else None
         due_odometer = last_odometer + rule.interval_km if rule.interval_km else None

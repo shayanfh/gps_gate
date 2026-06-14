@@ -5,7 +5,7 @@ from gps_gate.apis.maintenance import (
     generate_schedules_for_vehicle,
     evaluate_vehicle_maintenance,
 )
-
+import logging
 
 NOTIFICATION_STATUSES = ["Due Soon", "Overdue"]
 NOTIFICATION_ROLE = "Maintenance Manager"
@@ -28,6 +28,7 @@ def hourly_vehicle_maintenance_job():
     """
 
     log = frappe.logger("vehicle_maintenance_job", allow_site=True, file_count=5)
+    log.setLevel(logging.DEBUG)
 
     log.info("===== Hourly vehicle maintenance job started =====")
 
