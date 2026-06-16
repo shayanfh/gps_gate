@@ -170,6 +170,7 @@ def _create_initial_service_logs(vehicle, vehicle_type, init_date, init_km):
     try:
         log = frappe.new_doc("Vehicle Service Log")
         log.vehicle = vehicle.name
+        log.company = vehicle.get("custom_company")
         for st in service_types:
             log.append("service_type", {"service_type": st})
         log.service_date = init_date
@@ -288,6 +289,7 @@ def generate_schedules_for_vehicle(vehicle_name):
         schedule = frappe.new_doc("Vehicle Service Schedule")
 
         schedule.vehicle = vehicle_name
+        schedule.company = vehicle.get("custom_company")
         schedule.vehicle_type = vehicle_type_name
         schedule.service_type = rule.service_type
         schedule.based_on = rule.based_on

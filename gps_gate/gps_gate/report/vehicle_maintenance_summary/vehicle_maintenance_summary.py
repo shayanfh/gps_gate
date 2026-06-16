@@ -40,11 +40,36 @@ def get_columns():
     ]
 
 
+def _get_user_companies():
+    """Return the list of companies the current user is restricted to.
+    Empty list means no restriction (System Manager / Administrator sees all)."""
+    user = frappe.session.user
+    if user == "Administrator":
+        return []
+
+    companies = frappe.get_all(
+        "User Permission",
+        filters={"user": user, "allow": "Company"},
+        pluck="for_value",
+    )
+    if companies:
+        return companies
+
+    default_company = frappe.defaults.get_user_default("Company")
+    return [default_company] if default_company else []
+
+
 def get_data():
+    schedule_filters = {"status": ["in", ["Overdue", "Due Soon"]]}
+
+    user_companies = _get_user_companies()
+    if user_companies:
+        schedule_filters["company"] = ["in", user_companies]
+
     schedules = frappe.get_all(
         "Vehicle Service Schedule",
-        filters={"status": ["in", ["Overdue", "Due Soon"]]},
-        fields=["vehicle", "service_type", "status"],
+        filters=schedule_filters,
+        fields=["vehicle", "service_type", "status", "company"],
     )
 
     vehicle_map = {}

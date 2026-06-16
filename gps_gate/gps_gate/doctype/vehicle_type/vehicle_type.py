@@ -7,7 +7,25 @@ from frappe.model.document import Document
 
 
 class VehicleType(Document):
-    pass
+    def validate(self):
+        self._validate_unique_name_per_company()
+
+    def _validate_unique_name_per_company(self):
+        duplicate = frappe.db.get_value(
+            "Vehicle Type",
+            {
+                "vehicle_type_name": self.vehicle_type_name,
+                "company": self.company,
+                "name": ["!=", self.name],
+            },
+            "name",
+        )
+        if duplicate:
+            frappe.throw(
+                _(
+                    "Vehicle Type '{0}' already exists for company '{1}'."
+                ).format(self.vehicle_type_name, self.company)
+            )
 
 
 @frappe.whitelist()
@@ -16,7 +34,11 @@ def generate_schedules(docname):
     from gps_gate.apis.maintenance import generate_schedules_for_vehicle
 
     vehicle_type = frappe.get_doc("Vehicle Type", docname)
-    vehicles = frappe.get_all("Vehicle", filters={"custom_vehicle_type": docname}, fields=["name"])
+    vehicles = frappe.get_all(
+        "Vehicle",
+        filters={"custom_vehicle_type": docname, "custom_company": vehicle_type.company},
+        fields=["name"],
+    )
     created = 0
     for v in vehicles:
         created += generate_schedules_for_vehicle(v.name)

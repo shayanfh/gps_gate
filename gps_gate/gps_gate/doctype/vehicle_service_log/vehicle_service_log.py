@@ -112,6 +112,7 @@ def _create_next_schedule(log_doc):
 
         schedule = frappe.new_doc("Vehicle Service Schedule")
         schedule.vehicle = log_doc.vehicle
+        schedule.company = vehicle.get("custom_company")
         schedule.vehicle_type = vehicle_type_name
         schedule.service_type = service_type
         schedule.based_on = rule.based_on
