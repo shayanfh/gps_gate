@@ -15,7 +15,7 @@ from datetime import timedelta
 from frappe.utils import now, get_datetime, format_datetime
 from frappe import _
 from frappe.utils import add_days, today
-from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError
+from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError, get_enabled_companies
 
 
 def sanitize_datetime(value):
@@ -71,22 +71,24 @@ def format_date_for_api(date_value):
     return date_value.strftime("%Y-%m-%d")
 
 @frappe.whitelist(allow_guest=False)
-def sync_gps_gate_event_rules():
+def sync_gps_gate_event_rules(company=None):
     """
     Fetch event rules from GPS Gate and sync them into ERPNext.
-    Creates new records for event rules that don't exist, updates existing ones.
-    
-    Returns:
-        dict: Sync result with status and count of synced records
+    When called as a scheduled job (company=None) runs for all enabled companies.
     """
+    if company is None:
+        for c in get_enabled_companies():
+            sync_gps_gate_event_rules(company=c)
+        return
+
     try:
-        client = get_gps_gate_client()
+        client = get_gps_gate_client(company=company)
         event_rules = client.get_event_rules()
     except GPSGateAPIError as e:
         frappe.throw(str(e.message))
     except Exception as e:
         frappe.log_error(
-            title="GPS Gate Event Rules Sync Failed",
+            title=f"GPS Gate Event Rules Sync Failed [{company}]",
             message=frappe.get_traceback()
         )
         frappe.throw(_("Unable to connect to GPS Gate API: {0}").format(str(e)))
@@ -158,39 +160,44 @@ def sync_gps_gate_event_rules():
     return result
 
 def scheduled_sync_gps_gate_events():
-    """
-    Scheduled job wrapper - roz 12:01 AM chalti hai
-    Automatically previous day ki date pass karti hai
-    """
-    
+    """Scheduled job: runs for all enabled companies for yesterday's date."""
+    yesterday = str(add_days(today(), -1))
 
-    yesterday = add_days(today(), -1)
-    
-    sync_gps_gate_events(
-        from_date=str(yesterday),
-        to_date=str(yesterday)
-    )
+    for company in get_enabled_companies():
+        try:
+            sync_gps_gate_events(
+                from_date=yesterday,
+                to_date=yesterday,
+                company=company,
+            )
+        except Exception:
+            frappe.log_error(
+                title=f"GPS Gate Event Sync Failed [{company}]",
+                message=frappe.get_traceback(),
+            )
 
 @frappe.whitelist()
-def sync_gps_gate_events(from_date=None, to_date=None):
+def sync_gps_gate_events(from_date=None, to_date=None, company=None):
     """
-    Start GPS Gate event sync for all users using background jobs
-    Accepts from_date and to_date and enqueues jobs for each date individually
+    Start GPS Gate event sync for all users using background jobs.
+    When company is None, uses the current user's default company.
     """
-
     if not from_date or not to_date:
         return {"status": "error", "message": "from_date and to_date are required"}
 
     from frappe.utils import add_days, getdate
+    from gps_gate.gps_gate_api import get_current_company
+
+    if not company:
+        company = get_current_company()
 
     start_date = getdate(from_date)
     end_date = getdate(to_date)
 
-    # Generate list of all dates in the range
     total_days = (end_date - start_date).days + 1
     dates = [start_date + timedelta(days=i) for i in range(total_days)]
 
-    users = frappe.get_all("GPS Gate User",filters={"user_type_id": 450}, pluck="name")
+    users = frappe.get_all("GPS Gate User", filters={"user_type_id": 450}, pluck="name")
     if not users:
         return {"status": "no_users_found"}
 
@@ -202,13 +209,13 @@ def sync_gps_gate_events(from_date=None, to_date=None):
         for i in range(0, total_users, chunk_size):
             user_chunk = users[i:i + chunk_size]
 
-            # Direct function pass (recommended)
             frappe.enqueue(
                 process_user_batch,
                 queue="long",
                 users=user_chunk,
                 date=date.strftime("%Y-%m-%d"),
-                job_name=f"gpsgate-sync-{date}-{i}"
+                company=company,
+                job_name=f"gpsgate-sync-{company}-{date}-{i}",
             )
 
             jobs_created += 1
@@ -218,18 +225,17 @@ def sync_gps_gate_events(from_date=None, to_date=None):
         "total_users": total_users,
         "chunk_size": chunk_size,
         "total_dates": total_days,
-        "jobs_created": jobs_created
+        "jobs_created": jobs_created,
+        "company": company,
     }
     
 
-def process_user_batch(users, date):
-    """
-    Process a batch of users and fetch events
-    """
+def process_user_batch(users, date, company=None):
+    """Process a batch of users and fetch events for a given company."""
 
     try:
 
-        client = get_gps_gate_client()
+        client = get_gps_gate_client(company=company)
 
         date_formatted = format_date_for_api(date)
 

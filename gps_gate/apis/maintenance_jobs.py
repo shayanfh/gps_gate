@@ -5,23 +5,22 @@ from gps_gate.apis.maintenance import (
     generate_schedules_for_vehicle,
     evaluate_vehicle_maintenance,
 )
+from gps_gate.gps_gate_api import get_enabled_companies
 import logging
 
 NOTIFICATION_STATUSES = ["Due Soon", "Overdue"]
 NOTIFICATION_ROLE = "Maintenance Manager"
 
-# اگر نمی‌خوای هر ساعت برای یک schedule نوتیفیکیشن تکراری بره،
-# این عدد مشخص می‌کنه حداقل چند ساعت فاصله بین notificationها باشد.
 NOTIFICATION_REPEAT_AFTER_HOURS = 24
 
 
 @frappe.whitelist()
 def hourly_vehicle_maintenance_job():
     """
-    This job runs every hour.
+    Runs every hour per enabled company.
 
-    It:
-    1. Finds all Vehicles with custom_vehicle_type.
+    For each GPS Gate-enabled company:
+    1. Finds Vehicles belonging to that company with custom_vehicle_type set.
     2. Generates missing Vehicle Service Schedules.
     3. Evaluates existing schedules.
     4. Creates Notification Log records for Due Soon / Overdue schedules.
@@ -32,93 +31,101 @@ def hourly_vehicle_maintenance_job():
 
     log.info("===== Hourly vehicle maintenance job started =====")
 
-    vehicles = frappe.get_all(
-        "Vehicle",
-        filters={
-            "custom_vehicle_type": ["is", "set"],
-        },
-        fields=[
-            "name",
-            "license_plate",
-            "custom_vehicle_type",
-        ],
-    )
+    companies = get_enabled_companies()
+    log.info(f"Enabled companies: {companies}")
 
-    log.info(f"Vehicles found: {len(vehicles)}")
+    grand_total_created = 0
+    grand_total_evaluated = 0
+    grand_vehicle_errors = 0
 
-    total_created = 0
-    total_evaluated = 0
-    vehicle_errors = 0
+    for company in companies:
+        log.info(f"----- Processing company: {company} -----")
 
-    for vehicle in vehicles:
-        try:
-            created = generate_schedules_for_vehicle(vehicle.name)
-            evaluated = evaluate_vehicle_maintenance(vehicle.name)
-
-            total_created += created or 0
-            total_evaluated += evaluated or 0
-
-            frappe.db.commit()
-
-            log.info(
-                f"Vehicle {vehicle.name}: created={created}, evaluated={evaluated}"
-            )
-
-        except Exception:
-            vehicle_errors += 1
-
-            tb = frappe.get_traceback()
-
-            log.error(f"Maintenance job failed for vehicle {vehicle.name}:\n{tb}")
-
-            frappe.log_error(
-                title=f"Vehicle Maintenance Job Error - {vehicle.name}",
-                message=tb,
-            )
-
-            frappe.db.rollback()
-
-    notification_count = 0
-
-    try:
-        notification_count = create_maintenance_notifications()
-        frappe.db.commit()
-
-    except Exception:
-        tb = frappe.get_traceback()
-
-        log.error(f"Maintenance notification job failed:\n{tb}")
-
-        frappe.log_error(
-            title="Vehicle Maintenance Notification Job Error",
-            message=tb,
+        vehicles = frappe.get_all(
+            "Vehicle",
+            filters={
+                "custom_vehicle_type": ["is", "set"],
+                "custom_company": company,
+            },
+            fields=["name", "license_plate", "custom_vehicle_type"],
         )
 
-        frappe.db.rollback()
+        log.info(f"[{company}] Vehicles found: {len(vehicles)}")
+
+        total_created = 0
+        total_evaluated = 0
+        vehicle_errors = 0
+
+        for vehicle in vehicles:
+            try:
+                created = generate_schedules_for_vehicle(vehicle.name)
+                evaluated = evaluate_vehicle_maintenance(vehicle.name)
+
+                total_created += created or 0
+                total_evaluated += evaluated or 0
+
+                frappe.db.commit()
+
+                log.info(
+                    f"[{company}] Vehicle {vehicle.name}: created={created}, evaluated={evaluated}"
+                )
+
+            except Exception:
+                vehicle_errors += 1
+                tb = frappe.get_traceback()
+                log.error(f"[{company}] Maintenance job failed for vehicle {vehicle.name}:\n{tb}")
+                frappe.log_error(
+                    title=f"Vehicle Maintenance Job Error - {vehicle.name}",
+                    message=tb,
+                )
+                frappe.db.rollback()
+
+        notification_count = 0
+        try:
+            notification_count = create_maintenance_notifications(company=company)
+            frappe.db.commit()
+        except Exception:
+            tb = frappe.get_traceback()
+            log.error(f"[{company}] Maintenance notification job failed:\n{tb}")
+            frappe.log_error(
+                title=f"Vehicle Maintenance Notification Job Error - {company}",
+                message=tb,
+            )
+            frappe.db.rollback()
+
+        log.info(
+            f"[{company}] finished: vehicles={len(vehicles)}, "
+            f"created={total_created}, evaluated={total_evaluated}, "
+            f"vehicle_errors={vehicle_errors}, notifications={notification_count}"
+        )
+
+        grand_total_created += total_created
+        grand_total_evaluated += total_evaluated
+        grand_vehicle_errors += vehicle_errors
 
     log.info(
         "===== Hourly vehicle maintenance job finished: "
-        f"vehicles={len(vehicles)}, "
-        f"created={total_created}, "
-        f"evaluated={total_evaluated}, "
-        f"vehicle_errors={vehicle_errors}, "
-        f"notifications={notification_count} ====="
+        f"companies={len(companies)}, "
+        f"created={grand_total_created}, "
+        f"evaluated={grand_total_evaluated}, "
+        f"vehicle_errors={grand_vehicle_errors} ====="
     )
 
 
-def create_maintenance_notifications():
+def create_maintenance_notifications(company=None):
     """
     Creates Notification Log records for Due Soon / Overdue schedules.
 
-    It avoids spam by checking `custom_last_notification_sent_at`.
+    Scoped to a single company when provided.
+    Avoids spam by checking `custom_last_notification_sent_at`.
     """
 
-    users = get_maintenance_notification_users()
+    users = get_maintenance_notification_users(company=company)
 
     if not users:
         return 0
 
-    schedules = get_schedules_requiring_notification()
+    schedules = get_schedules_requiring_notification(company=company)
 
     created_count = 0
 
@@ -141,13 +148,11 @@ def create_maintenance_notifications():
     return created_count
 
 
-def get_maintenance_notification_users():
+def get_maintenance_notification_users(company=None):
     """
-    Returns active users who should receive maintenance notifications.
+    Returns active users with NOTIFICATION_ROLE who should receive maintenance alerts.
 
-    For now it uses System Manager.
-    Later you can change NOTIFICATION_ROLE to Maintenance Manager
-    if you create that role.
+    When company is given, only users whose default company matches are included.
     """
 
     users = frappe.get_all(
@@ -166,17 +171,24 @@ def get_maintenance_notification_users():
             continue
 
         enabled = frappe.db.get_value("User", user, "enabled")
+        if not enabled:
+            continue
 
-        if enabled:
-            active_users.append(user)
+        if company:
+            user_company = frappe.defaults.get_user_default("Company", user)
+            if user_company and user_company != company:
+                continue
+
+        active_users.append(user)
 
     return active_users
 
 
-def get_schedules_requiring_notification():
+def get_schedules_requiring_notification(company=None):
     """
     Returns schedules that are Due Soon or Overdue and should notify users.
 
+    Scoped to a company when provided.
     Notification is sent if:
     - custom_last_notification_sent_at is empty
     OR
@@ -189,11 +201,13 @@ def get_schedules_requiring_notification():
         as_datetime=True,
     )
 
+    filters = {"status": ["in", NOTIFICATION_STATUSES]}
+    if company:
+        filters["company"] = company
+
     schedules = frappe.get_all(
         "Vehicle Service Schedule",
-        filters={
-            "status": ["in", NOTIFICATION_STATUSES],
-        },
+        filters=filters,
         fields=[
             "name",
             "vehicle",

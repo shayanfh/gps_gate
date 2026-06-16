@@ -12,7 +12,7 @@ import frappe
 from frappe.utils import now
 from frappe import _
 
-from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError
+from gps_gate.gps_gate_api import get_gps_gate_client, GPSGateAPIError, get_enabled_companies
 
 
 def sanitize_datetime(value):
@@ -49,22 +49,26 @@ def sanitize_datetime(value):
 
 
 @frappe.whitelist(allow_guest=False)
-def sync_gps_gate_users():
+def sync_gps_gate_users(company=None):
     """
     Fetch users from GPS Gate and sync them into ERPNext.
-    Creates new records for users that don't exist, updates existing ones.
-    
-    Returns:
-        dict: Sync result with status and count of synced records
+    When called as a scheduled job (company=None) runs for all enabled companies.
     """
+    if company is None:
+        total_synced = 0
+        for c in get_enabled_companies():
+            result = sync_gps_gate_users(company=c)
+            total_synced += result.get("synced_records", 0)
+        return {"status": "success", "synced_records": total_synced}
+
     try:
-        client = get_gps_gate_client()
+        client = get_gps_gate_client(company=company)
         users = client.get_users()
     except GPSGateAPIError as e:
         frappe.throw(str(e.message))
     except Exception as e:
         frappe.log_error(
-            title="GPS Gate User Sync Failed",
+            title=f"GPS Gate User Sync Failed [{company}]",
             message=frappe.get_traceback()
         )
         frappe.throw(_("Unable to connect to GPS Gate API: {0}").format(str(e)))

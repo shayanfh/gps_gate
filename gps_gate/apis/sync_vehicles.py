@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.utils import now, cint
 
-from gps_gate.gps_gate_api import GPSGateClient, GPSGateAPIError
+from gps_gate.gps_gate_api import GPSGateClient, GPSGateAPIError, get_current_company
 
 
 _SYNC_CANCEL_KEY = "gps_gate_vehicle_sync_cancel"
@@ -183,21 +183,22 @@ def _apply_custom_fields(doc, custom_fields, log=None):
             )
 
 
-def _get_default_vehicle_type():
+def _get_default_vehicle_type(company=None):
     global _default_vehicle_type_cache
 
-    if not _default_vehicle_type_cache:
-        _default_vehicle_type_cache = frappe.db.get_value(
-            "Vehicle Type",
-            {"is_active": 1},
-            "name",
-            order_by="creation asc",
-        )
+    if not company:
+        if not _default_vehicle_type_cache:
+            _default_vehicle_type_cache = frappe.db.get_value(
+                "Vehicle Type", {"is_active": 1}, "name", order_by="creation asc"
+            )
+        return _default_vehicle_type_cache
 
-    return _default_vehicle_type_cache
+    return frappe.db.get_value(
+        "Vehicle Type", {"is_active": 1, "company": company}, "name", order_by="creation asc"
+    )
 
 
-def _fill_mandatory_fields(doc):
+def _fill_mandatory_fields(doc, company=None):
     meta = frappe.get_meta("Vehicle")
 
     for field in meta.fields:
@@ -210,8 +211,12 @@ def _fill_mandatory_fields(doc):
         if doc.get(field.fieldname):
             continue
 
-        if field.fieldname == "custom_vehicle_type":
-            default_type = _get_default_vehicle_type()
+        if field.fieldname == "custom_company":
+            if company:
+                doc.set(field.fieldname, company)
+
+        elif field.fieldname == "custom_vehicle_type":
+            default_type = _get_default_vehicle_type(company=company)
 
             if default_type:
                 doc.set(field.fieldname, default_type)
@@ -228,7 +233,7 @@ def _raise_if_cancelled():
         raise frappe.ValidationError("Vehicle sync cancelled by user.")
 
 
-def _sync_single_vehicle(u, client, log):
+def _sync_single_vehicle(u, client, log, company=None):
     """
     Fetch data, save one Vehicle, commit immediately.
 
@@ -281,6 +286,8 @@ def _sync_single_vehicle(u, client, log):
     doc.custom_gpsgate_user_id = gps_user_id
     doc.custom_gpsgate_device_id = first_device_id
     doc.custom_last_telematics_sync = now()
+    if company:
+        doc.custom_company = company
 
     try:
         accumulators = client.get_user_accumulators(gps_user_id)
@@ -320,7 +327,7 @@ def _sync_single_vehicle(u, client, log):
     if _is_sync_cancelled():
         return "cancelled"
 
-    _fill_mandatory_fields(doc)
+    _fill_mandatory_fields(doc, company=company)
 
     if _is_sync_cancelled():
         return "cancelled"
@@ -338,14 +345,14 @@ def _sync_single_vehicle(u, client, log):
     return action
 
 
-def _run_sync(triggered_by=None):
+def _run_sync(triggered_by=None, company=None):
     log = frappe.logger("vehicle_sync", allow_site=True, file_count=5)
     log.setLevel(logging.DEBUG)
 
     log.warning("🚀 _run_sync started")
     log.warning(
         f"🚀 site={getattr(frappe.local, 'site', None)} "
-        f"triggered_by={triggered_by}"
+        f"triggered_by={triggered_by} company={company}"
     )
 
     log.warning(f"🚀 cancel flag BEFORE clear value={_get_cancel_flag()!r}")
@@ -360,7 +367,9 @@ def _run_sync(triggered_by=None):
     log.info("===== Vehicle sync started =====")
 
     try:
-        client = GPSGateClient()
+        client = GPSGateClient(company=company)
+        # Resolve company from the client in case it was None (read from user default)
+        company = client.company
 
     except GPSGateAPIError as e:
         log.error(f"GPSGateClient init failed: {e.message}")
@@ -514,7 +523,7 @@ def _run_sync(triggered_by=None):
         log.info(f"[{i}/{total}] user_id={gps_id}")
 
         try:
-            action = _sync_single_vehicle(u, client, log)
+            action = _sync_single_vehicle(u, client, log, company=company)
 
             if action == "cancelled":
                 log.info("Sync cancelled by user during vehicle sync.")
@@ -564,11 +573,13 @@ def _run_sync(triggered_by=None):
 @frappe.whitelist()
 def sync_vehicles_from_gps_gate():
     """
-    Enqueue the vehicle sync as a long background job.
+    Enqueue the vehicle sync as a long background job for the current user's company.
     """
-    if not frappe.db.exists("Vehicle Type", {"is_active": 1}):
+    company = get_current_company()
+
+    if not frappe.db.exists("Vehicle Type", {"is_active": 1, "company": company}):
         frappe.throw(
-            _("Please add at least one active Vehicle Type before syncing vehicles.")
+            _("Please add at least one active Vehicle Type for company '{0}' before syncing vehicles.").format(company)
         )
 
     _clear_cancel_flag()
@@ -577,9 +588,10 @@ def sync_vehicles_from_gps_gate():
         "gps_gate.apis.sync_vehicles._run_sync",
         queue="long",
         timeout=3600,
-        job_id="gps_gate_vehicle_sync",
+        job_id=f"gps_gate_vehicle_sync_{company}",
         deduplicate=True,
         triggered_by=frappe.session.user,
+        company=company,
     )
 
     return {"status": "queued"}

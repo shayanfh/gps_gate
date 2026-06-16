@@ -42,22 +42,24 @@ class GPSGateClient:
     #         "Authorization": self.token,
     #         "Content-Type": "application/json"
     #     }
-    def __init__(self):
-        """Initialize GPS Gate API client using logged-in user's default company."""
+    def __init__(self, company=None):
+        """Initialize GPS Gate API client.
 
-        # Get logged in user
-        user = frappe.session.user
-
-        # Get user's default company
-        company = frappe.defaults.get_user_default("Company")
-
-        if not company:
-            raise GPSGateAPIError(
-                _("No default company is set for user {0}").format(user)
-            )
+        Args:
+            company: Company name to use. If None, falls back to the logged-in
+                     user's default company (suitable for interactive requests).
+        """
+        if company:
+            self.company = company
+        else:
+            self.company = frappe.defaults.get_user_default("Company")
+            if not self.company:
+                raise GPSGateAPIError(
+                    _("No default company is set for user {0}").format(frappe.session.user)
+                )
 
         # Fetch company document
-        self.settings = frappe.get_doc("Company", company)
+        self.settings = frappe.get_doc("Company", self.company)
 
         self._validate_settings()
 
@@ -726,17 +728,26 @@ class GPSGateClient:
         return self._make_request("PUT", f"users/{user_id}/customfields/{custom_field_name}", payload)
 
 
-def get_gps_gate_client():
-    """
-    Factory function to create a GPS Gate client.
-    
-    Returns:
-        GPSGateClient: Configured API client
-        
-    Raises:
-        frappe.ValidationError: If settings are invalid
-    """
+def get_gps_gate_client(company=None):
+    """Factory: create a GPSGateClient for the given company (or current user's default)."""
     try:
-        return GPSGateClient()
+        return GPSGateClient(company=company)
     except GPSGateAPIError as e:
         frappe.throw(str(e.message))
+
+
+def get_current_company():
+    """Return the current user's default company, throwing if not set."""
+    company = frappe.defaults.get_user_default("Company")
+    if not company:
+        frappe.throw(_("No default Company is set for the current user."))
+    return company
+
+
+def get_enabled_companies():
+    """Return all companies that have GPS Gate integration enabled."""
+    return frappe.get_all(
+        "Company",
+        filters={"custom_enable": 1},
+        pluck="name",
+    )
