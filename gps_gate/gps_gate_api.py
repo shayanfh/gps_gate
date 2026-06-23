@@ -737,11 +737,39 @@ def get_gps_gate_client(company=None):
 
 
 def get_current_company():
-    """Return the current user's default company, throwing if not set."""
+    """Return company for the current user.
+
+    Resolution order:
+    1. User's default company (set in profile / global defaults).
+    2. Single User Permission on Company (if only one is assigned).
+    3. Throws with a helpful message if neither is found.
+    """
     company = frappe.defaults.get_user_default("Company")
-    if not company:
-        frappe.throw(_("No default Company is set for the current user."))
-    return company
+    if company:
+        return company
+
+    # Fallback: User Permission
+    permitted = frappe.get_all(
+        "User Permission",
+        filters={"user": frappe.session.user, "allow": "Company"},
+        pluck="for_value",
+    )
+    if len(permitted) == 1:
+        return permitted[0]
+    if len(permitted) > 1:
+        frappe.throw(
+            _(
+                "Multiple companies are assigned to your account. "
+                "Please set a default Company in your profile (User → Default Company)."
+            )
+        )
+
+    frappe.throw(
+        _(
+            "No default Company is set for the current user. "
+            "Please set it in your profile or ask your administrator to assign a Company permission."
+        )
+    )
 
 
 def get_enabled_companies():
