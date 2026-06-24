@@ -386,6 +386,7 @@ def _run_sync(triggered_by=None, company=None):
         )
         return
 
+    # Get all the device users which are activae and available
     try:
         roles = client.get_roles()
         unit_role = next((r for r in (roles or []) if r.get("name") == "_Unit"), None)
@@ -459,7 +460,7 @@ def _run_sync(triggered_by=None, company=None):
 
     device_users = [
         u for u in users
-        if cint(u.get("userTemplateID")) == device_type_id
+        if cint(u.get("id")) in unit_user_ids
     ]
 
     total = len(device_users)
