@@ -222,20 +222,16 @@ def generate_schedules_for_vehicle(vehicle_name):
     )
     if not has_any_log:
         init_date, init_km = _fetch_gpsgate_initial_maintenance(vehicle)
+        if not init_date:
+            # Last Maintenance Date is empty in GPS Gate — skip silently.
+            # Next job run will re-check and proceed once the date is filled.
+            return 0
         log.info(
             f"[{vehicle_name}] No submitted service log found. "
             f"GPS Gate init_date={init_date}, init_km={init_km}."
         )
-        if init_date:
-            result = _create_initial_service_logs(vehicle, vehicle_type, init_date, init_km)
-            log.info(f"[{vehicle_name}] Initial service log creation result: {result}")
-        else:
-            log.info(f"{vehicle}")
-            log.info(
-                f"[{vehicle_name}] Skipping initial log: custom_last_maintenance_date is empty. "
-                f"purchase_date={vehicle.get('purchase_date')}, "
-                f"vehicle.creation={getdate(vehicle.creation)}."
-            )
+        result = _create_initial_service_logs(vehicle, vehicle_type, init_date, init_km)
+        log.info(f"[{vehicle_name}] Initial service log creation result: {result}")
     else:
         log.info(f"[{vehicle_name}] Already has submitted service log — skipping initial seed.")
 
